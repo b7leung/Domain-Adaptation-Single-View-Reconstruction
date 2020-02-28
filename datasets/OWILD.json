@@ -1,0 +1,702 @@
+[
+    {
+        "taxonomy_id": "Airplane (Model)",
+        "taxonomy_name": "Airplane (Model)",
+        "train": [
+            "Toy Military Fighter Jet",
+            "Airforce One",
+            "Foam Rubber Band Water Plane",
+            "Wooden Turqouise Toy Plane",
+            "Blue Wooden Toy Plane",
+            "Yellow Toy Plane",
+            "DIY Styrofoam Airplane",
+            "Lego Airplane",
+            "Toy Raft Airplane",
+            "Hercules Plane",
+            "Military Black Stealth Plane",
+            "Yellow Propeller Plane",
+            "United States Airforce Plane",
+            "SR71 Blackbird",
+            "Blue Toy Plane",
+            "P47 Thunderbolt"
+        ],
+        "test": [
+            "NASA Airplane",
+            "Toy Commercial Airplane",
+            "Toy Plane",
+            "PlayMobile Plane"
+        ]
+    },
+    {
+        "taxonomy_id": "Backpack",
+        "taxonomy_name": "Backpack",
+        "train": [
+            "Superman Themed Backpack",
+            "R2-D2 Backpack",
+            "Dark Green Backpack",
+            "White Floral Design Backpack",
+            "Multicolored Geometric Pattern Backpack",
+            "Red Sports Themed Backpack",
+            "Pink Backpack",
+            "Orange Jansport Backpack",
+            "Blue Backpack",
+            "Teenage Mutant Ninja Turtles Backpack",
+            "Yellow Green Backpack",
+            "Black Backpack",
+            "Jurassic Park Backpack",
+            "Brown Patterned Backpack",
+            "Camo Backpack",
+            "Black Herschel Supply Co Backpack"
+        ],
+        "test": [
+            "Brown Backpack",
+            "Pink Butterfly Backpack",
+            "Multicolored Backpack",
+            "Minnie Mouse Themed Backpack"
+        ]
+    },
+    {
+        "taxonomy_id": "Boat (Model)",
+        "taxonomy_name": "Boat (Model)",
+        "train": [
+            "Blue Model Sailboat",
+            "Wooden Dinghy",
+            "Blue and White Toy Boat",
+            "Blue White Ferry",
+            "Wooden Sailboat",
+            "Toy Marine Rescue Boat",
+            "Toy Speedboat",
+            "Staten Island Ferry Model",
+            "Toy Pirate Ship",
+            "Wooden British Ship",
+            "Toy Raft Boat",
+            "Red Speed Boat",
+            "Red and White Toy Speedboat",
+            "Brown Toy Sailboat",
+            "Yellow Speedboat",
+            "Red and Yellow Toy Sailboat"
+        ],
+        "test": [
+            "Papercraft Cruise Ship",
+            "Purple and Yellow Toy Boat",
+            "Baby Red Ferry",
+            "Jet Ski"
+        ]
+    },
+    {
+        "taxonomy_id": "Book",
+        "taxonomy_name": "Book",
+        "train": [
+            "A Window For One Year Book",
+            "Small Open Hardcover Book",
+            "The Doctors Book of Food Remedies Hardcover Book",
+            "Black Hardcover Book",
+            "Open Red Book",
+            "Open Textbook",
+            "The Lost World Novel",
+            "Microsoft Powerpoint 2010 For Dummies Book",
+            "Small Open Book",
+            "Rachel Ray Top 20 Minute Meals Cookbook",
+            "Music Book",
+            "College Basketball Hardcover Book",
+            "The Blooding",
+            "Fictitious Dishes Hardcover Book",
+            "My Nursery Rhymes",
+            "Open Mazagine"
+        ],
+        "test": [
+            "2008 Nurses Drug Handbook",
+            "Bathroom Ideas That Work",
+            "Little Cow",
+            "Taken By Midnight Novel"
+        ]
+    },
+    {
+        "taxonomy_id": "Bottle",
+        "taxonomy_name": "Bottle",
+        "train": [
+            "Starbucks Iced Sweetened Black Coffee Bottle",
+            "Starbucks Bottled Frappuccino",
+            "Martinellis Apple Juice Bottle",
+            "Honest Sport Organic Berry Bottle",
+            "Stumptown Cold Brew Coffee Bottle",
+            "Tropical Citrus Vitaminwater Bottle",
+            "Pure Leaf Extra Sweet Tea",
+            "Fruit Punch Powerade Bottle",
+            "Arizona Green Tea Bottle",
+            "The Naked Grape Pinot Noir Wine Bottle",
+            "Montevina Skyland Ridge Zinfandel Wine Bottle",
+            "Cool Blue Gatorade Bottle",
+            "Canada Dry Cranberry Ginger Ale 2 Liter Bottle",
+            "Clamato Tomato Cocktail Bottle",
+            "Sherry Cooking Wine Bottle",
+            "Starbucks Cold Brew Black Coffee Bottle"
+        ],
+        "test": [
+            "Extra Virgin Olive Oil Bottle",
+            "5 Hour Energy Protein Plus Extra Strength",
+            "Huberts Blackberry Lemonade Bottle",
+            "Hidden Valley Ranch Dressing Bottle"
+        ]
+    },
+    {
+        "taxonomy_id": "Bowl",
+        "taxonomy_name": "Bowl",
+        "train": [
+            "Brown Ceramic Bowl",
+            "Large Bowl Filled with Fruits",
+            "Empty Ceramic Floral Bowl",
+            "White Bowl on Plate",
+            "Shallow Gold Trim Bowl",
+            "Decorative Gold Leaf Glass Bowl",
+            "White Floral Design Bowl",
+            "Brown Lidded Bowl",
+            "White Fluted Ceramic Bowl",
+            "White and Gold Floral Design Bowl",
+            "White Ceramic Bowl Filled with Oranges",
+            "Floral Design Bowl with Handles",
+            "Decorative Green and Grey Bowl",
+            "White Ceramic Bowl Filled with Roses",
+            "Ornamental Metal Bowl",
+            "Empty Ridged Oval Ceramic Bowl"
+        ],
+        "test": [
+            "Wooden Bowl",
+            "Bowl Filled with Candy",
+            "Decorative Wax Bowl",
+            "Decorated Empty Ceramic Bowl"
+        ]
+    },
+    {
+        "taxonomy_id": "Can",
+        "taxonomy_name": "Can",
+        "train": [
+            "Crisco Vegetable Shortening Can",
+            "Brisk Iced Tea Can",
+            "Swanson Chicken Breast",
+            "UCC Coffee Can",
+            "Shaving Powder Can",
+            "Sugar Free Red Bull Can",
+            "Tuna Can",
+            "Rockstar Pure Zero Watermelon Energy Drink",
+            "Campbells Tomato Soup Can",
+            "Coca Cola Can",
+            "Gold Star Wars Space Punch Can",
+            "Tomato Paste Can",
+            "Spam 25 Less Sodium",
+            "Ito En Sweetened Milk Tea Can",
+            "Starbucks Cubano Doubleshot Espresso Can",
+            "Opened Armour Vienna Sausage Can"
+        ],
+        "test": [
+            "Family Size Campbells Tomato Soup Can",
+            "Damaged Del Monte Whole Kernel Corn Can",
+            "Opened Progresso Hearty Chicken Rotini Can",
+            "Alta Dena Whipped Cream Can"
+        ]
+    },
+    {
+        "taxonomy_id": "Car (Model)",
+        "taxonomy_name": "Car (Model)",
+        "train": [
+            "Yellow Classic Model Car",
+            "RC Crawler",
+            "Green Toy Car",
+            "Garbage Truck",
+            "Jurassic World Truck",
+            "Silver Model Convertible Car",
+            "Blue Classic Car",
+            "Red Toy Sportscar",
+            "Schoolbus",
+            "Black Monster Truck Toy",
+            "White Toy RV",
+            "Construction Dump Truck",
+            "Yellow Toy Lamborghini Sports Car",
+            "Yellow Toy Sports Car",
+            "Large Black Toy Truck",
+            "Wooden Old Fashioned Car"
+        ],
+        "test": [
+            "Fire Truck",
+            "White 1984 Ferrari Testarossa Toy Sports Car",
+            "Toy Police Car",
+            "Toy Truck"
+        ]
+    },
+    {
+        "taxonomy_id": "Clock (Analog)",
+        "taxonomy_name": "Clock (Analog)",
+        "train": [
+            "Black Tombstone Analog Clock",
+            "Black Alarm Clock",
+            "Circled Golden Analog Clock",
+            "Red Analog Clock",
+            "Yellow Analog Clock",
+            "White Square Marble Design Analog Clock",
+            "Blue Analog Clock",
+            "Turquoise Analog Clock",
+            "White Wall Clock",
+            "Round Black Analog Wall Clock",
+            "Pink Circular Analog Clock",
+            "Silver Analog Pocketwatch",
+            "Wooden Vintage Analog Clock",
+            "Light Green Analog Clock",
+            "Green and Silver Analog Clock",
+            "Red Wall Clock"
+        ],
+        "test": [
+            "Square Black Analog Clock",
+            "Round Whtie Wood Pattern Analog Wall Clock",
+            "Square White Analog Clock",
+            "Pocketwatch with Navy Blue Case"
+        ]
+    },
+    {
+        "taxonomy_id": "Clock (Digital)",
+        "taxonomy_name": "Clock (Digital)",
+        "train": [
+            "Rectangular Blue Digital Clock",
+            "Square Rectangular Digital Clock",
+            "Grey Digital Clock",
+            "Black Cube Sony Digital Clock",
+            "Tall Digital Clock",
+            "Old radio with digital clock",
+            "RCA Black Alarm Clock",
+            "Plastic Cube White Digital Clock",
+            "White Digital Clock",
+            "Square Black Digital Clock",
+            "Unpowered Red Display Digital Clock",
+            "Square White Digital Clock",
+            "Wooden Design Digital Clock",
+            "Black Digital Clock with Green Numerals",
+            "Black Digital clock with radio",
+            "Black Unpowered Digital Clock"
+        ],
+        "test": [
+            "Rounded White Clock",
+            "Black Oval Digital Clock",
+            "Mirror Digital Clock",
+            "Silver Digital Clock"
+        ]
+    },
+    {
+        "taxonomy_id": "Computer Mouse",
+        "taxonomy_name": "Computer Mouse",
+        "train": [
+            "Jeans Mouse",
+            "Razer Deathadder Chroma Mouse",
+            "White Foldable Optical Wireless Mouse",
+            "Red Logitec Mouse",
+            "Blue Wired Verbatim Mouse",
+            "Flat Blue Mouse",
+            "Black Akun Wireless Mouse",
+            "Microsoft Pink Wireless Mouse",
+            "Black Logitech Programmable Wireless Mouse",
+            "Amazon Basics Purple Mouse",
+            "Silver and White Wireless Mouse",
+            "Akun Black Wireless Mouse",
+            "Logitech Trackball Mouse",
+            "Red and Silver Wireless Mouse",
+            "Black Wired Gaming Mouse",
+            "Red and Black Gaming Mouse"
+        ],
+        "test": [
+            "Black Amazon Basics Wireless Mouse",
+            "Red Logitech Mini Wireless Mouse",
+            "Wireless Tecknet Red Mouse",
+            "Tecknet Black Wireless Mouse"
+        ]
+    },
+    {
+        "taxonomy_id": "Hat",
+        "taxonomy_name": "Hat",
+        "train": [
+            "Magenta Cowboy Hat",
+            "Blue Snapback Hat",
+            "Beige Newsboy Cap",
+            "Forest Green Baseball Cap",
+            "Multicolored Beanie",
+            "Blue Chargers Cheer Team Baseball Cap",
+            "Blue Denim Bucket Hat",
+            "Beige Visor",
+            "Black Visor",
+            "Navy Blue Chargers Baseball Cap",
+            "Pink Santa Hat",
+            "Beige Brimmed Beanie",
+            "Floral Straw Hat",
+            "Navy Blue Cap",
+            "Red White and Blue Cowboy Hat",
+            "Grey Padres Homburg Hat"
+        ],
+        "test": [
+            "Straw Sun Hat",
+            "Black Fedora",
+            "Black and Green Visor",
+            "Black Cal State LA Baseball Cap"
+        ]
+    },
+    {
+        "taxonomy_id": "Keyboard",
+        "taxonomy_name": "Keyboard",
+        "train": [
+            "Apple Look alike keyboard",
+            "Black Ergonomic Keyboard",
+            "RGB Blacklit Keyboard",
+            "Wooden Keyboard",
+            "Typewriter style keyboard",
+            "Adesso Black Ergonomic Keyboard",
+            "Black Dell Wired Keyboard",
+            "Dell Classic Keyboard",
+            "Kensington Black Hand Rest Keyboard",
+            "Red and Black Gaming Keyboard",
+            "Dell Keyboard with Silver Multimedia Buttons",
+            "Logitech MK700 Keyboard",
+            "Digital Equipment Corporation Keyboard",
+            "Das Keyboard With Blue Keycaps",
+            "Green Keyboard",
+            "Gateway White Keyboard"
+        ],
+        "test": [
+            "Dell Black Windows Wired Keyboard",
+            "White Keyboard",
+            "Keyboard Amazon Basics",
+            "Magic Eagle white keyboard"
+        ]
+    },
+    {
+        "taxonomy_id": "Lamp",
+        "taxonomy_name": "Lamp",
+        "train": [
+            "Purple Lamp",
+            "Metallic Lamp",
+            "Pink Lamp",
+            "White Hapurs Flexible Clip Lamp",
+            "Silver OxyLED Lamp",
+            "Black August Foldable Lamp",
+            "Orange Lamp",
+            "Black Plastic Lamp",
+            "Pebble Lamp",
+            "White Desk Lamp",
+            "Minnie Mouse Lamp",
+            "Black and White Striped Lamp",
+            "Blue Lamp",
+            "Black Reflective Base Lamp",
+            "Eiffel Tower Themed Lamp",
+            "White Modern LED Lamp"
+        ],
+        "test": [
+            "Turquoise Desk Lamp",
+            "Black Silver Base Lamp",
+            "Bronze Lamp",
+            "Cars Themed Lamp"
+        ]
+    },
+    {
+        "taxonomy_id": "Laptop",
+        "taxonomy_name": "Laptop",
+        "train": [
+            "Lenovo Ideapad 510 Laptop",
+            "Black Toshiba Laptop",
+            "MacBook Pro 15",
+            "Toshiba M305D Laptop",
+            "Acer Icona Tab Tablet Laptop",
+            "Compaq Laptop",
+            "Sony VAIO Laptop",
+            "Black Eee Netbook",
+            "Grey Dell Elitebook Laptop",
+            "Black Acer Aspire 5532 Laptop",
+            "White Macbook",
+            "Asus G1S Gaming Laptop",
+            "Lenovo Thinkpad Laptop",
+            "Republic of Gamers Gaming Laptop",
+            "Intellective Toy Laptop",
+            "Dell XPS 15 Ultrabook"
+        ],
+        "test": [
+            "Closed Asus F50S Laptop",
+            "XPS 13 Laptop",
+            "2017 Silver Macbook Pro",
+            "Black Asus Laptop"
+        ]
+    },
+    {
+        "taxonomy_id": "Monitor",
+        "taxonomy_name": "Monitor",
+        "train": [
+            "Dell 17 Monitor",
+            "Glossy Black Samsung Monitor",
+            "Black and White CRT Monitor",
+            "Viewsonic iPhone Charging Monitor",
+            "Dell 24 Monitor",
+            "Black Dell Flat Panel Monitor",
+            "All Black Dell Monitor",
+            "Acer 17 Monitor",
+            "HP 2509m Black and Silver Monitor",
+            "Black Plavar Monitor",
+            "HP w19e",
+            "Adjustable Black and Silver Dell Monitor",
+            "Vertically Aligned Dell Monitor",
+            "ViewSonic 20 Monitor",
+            "Dell 19 Monitor",
+            "Sharp POS Terminal Monitor"
+        ],
+        "test": [
+            "GateWay Computer in Monitor",
+            "White CRT Monitor",
+            "Dell Ultrasharp Monitor",
+            "Sony Silver Monitor"
+        ]
+    },
+    {
+        "taxonomy_id": "Piano (Model)",
+        "taxonomy_name": "Piano (Model)",
+        "train": [
+            "Black Toy Upright Piano",
+            "Black Toy Grand Piano",
+            "White Grand Piano 1",
+            "Piano three songs",
+            "Pink Piano with Microphone",
+            "Wooden stand up piano",
+            "Elephant Piano",
+            "White Electric Grand Piano 2",
+            "Wooden grand piano",
+            "Pink Small Piano",
+            "Wooden Upright Piano",
+            "Purple Toy Piano",
+            "Red Mini Piano",
+            "Kids toy piano Orange",
+            "White Electric Grand Piano",
+            "Black small keyboard piano"
+        ],
+        "test": [
+            "Dark Brown Wooden Grand Piano",
+            "Pink Model Piano",
+            "Black plastic kids small grand piano",
+            "Kids Piano"
+        ]
+    },
+    {
+        "taxonomy_id": "Radio",
+        "taxonomy_name": "Radio",
+        "train": [
+            "Wooden Vintage Radio",
+            "Red Naxa Stereo Radio Player",
+            "Black Tyler Radio",
+            "Riptunes Bluetooth Radio",
+            "Pink Radio",
+            "Worldwide Radio Receiver",
+            "Black Radio Player",
+            "Red radio with speakers",
+            "Sylvania radio",
+            "GPX BoomBox",
+            "Turquoise Radio Player",
+            "Black Lefon Radio",
+            "Black Sony Radio Player",
+            "QFX Radio",
+            "GE Radio",
+            "Red Rolton Radio"
+        ],
+        "test": [
+            "Black SuperSonic Radio Player",
+            "Black Panasonic Radio",
+            "Casio Mobile Radio",
+            "Silver Indin Radio"
+        ]
+    },
+    {
+        "taxonomy_id": "Remote",
+        "taxonomy_name": "Remote",
+        "train": [
+            "Jumbo Universal Remote",
+            "Samsung DVD Remote",
+            "Samsung Gray TV Remote",
+            "JVC Black TV Remote",
+            "Apex Silver Remote",
+            "Sony DVD Remote",
+            "Silver Philips TV Remote",
+            "JVC Remote",
+            "iclicker 1 Remote",
+            "Samsung DVD Video Remote",
+            "iclicker 2 Remote",
+            "Xfinity TV Remote",
+            "Universal Remote",
+            "Panasonic DVD Player Remote",
+            "Cox TV Remote",
+            "Mitsubishi Remote"
+        ],
+        "test": [
+            "Luxor Satellite TV Remote",
+            "Nintendo Wii Remote",
+            "Silver and Black Philips TV Remote",
+            "Panasonic TV Remote"
+        ]
+    },
+    {
+        "taxonomy_id": "Shoe",
+        "taxonomy_name": "Shoe",
+        "train": [
+            "White Adidas Superstar Sneaker",
+            "Leopard Print Wedge Heel",
+            "Brown Mens Slip On Dress Shoe",
+            "Navy Blue and White Plaid Wellington Boot",
+            "Navy Blue and White New Balance 574 Sneakers",
+            "Red Adidas Sneakers",
+            "Brown Suede Heeled Boot",
+            "Red and Brown Wedge Shoes",
+            "Fuzzy Patterned Winter Boot",
+            "Brown Suede Boot",
+            "Blue Adidas Campus Sneakers",
+            "White and Black Nike Pegasus 30 Sneaker",
+            "Guess Black and White Stiletto Heel",
+            "Kids Blue Rubber Boot",
+            "White and Navy Blue Adidas Stan Smith Sneaker",
+            "Black and White Nike SB Paul Rodriguez 7 Skateboarding Shoes"
+        ],
+        "test": [
+            "Black Frilled Heeled Sandals",
+            "Nike Dunk SB Low Tiffany Sneakers",
+            "Black and Green Strap Sandals",
+            "Navy Blue and Gold Denim High Heel Boot"
+        ]
+    },
+    {
+        "taxonomy_id": "Teapot",
+        "taxonomy_name": "Teapot",
+        "train": [
+            "White Tea Pot",
+            "Blue Porcelain Tepot",
+            "White Porcelain Tea Pot",
+            "Blue and White Teapot",
+            "mettallic silve teapot",
+            "Metal Tea Pot",
+            "Dark Green Tea Pot",
+            "Man Shaped Teapot",
+            "Old Brown Clay Teapot",
+            "White Porcelain Teapot",
+            "Small Brown Teapot",
+            "white clay flower teapot",
+            "Light Green Teapot",
+            "Building Themed Teapot",
+            "Metal Tea Pot Old",
+            "brown triangular teapot"
+        ],
+        "test": [
+            "Brass Handle down Teapot",
+            "Blue White China Teapot",
+            "Green tetsubin teapot",
+            "Elephant Shaped Tea Pot"
+        ]
+    },
+    {
+        "taxonomy_id": "Teddy Bear",
+        "taxonomy_name": "Teddy Bear",
+        "train": [
+            "Brown and Green Teddy Bear",
+            "Pink Floral Design Teddy Bear",
+            "White Christmas Teddy Bear",
+            "Brown Teddy Bear Wearing Red Bow",
+            "White Teddy Bear Wearing Red Sweater",
+            "White Teddy Bear Wearing Gold Ribbon",
+            "Brown Teddy Bear",
+            "Teddy Bear Wearing Red Cape",
+            "Green and White Teddy Bear",
+            "Valentines Day Teddy Bear",
+            "Teddy Bear Holding Heart",
+            "Small White Teddy Bear",
+            "Light Brown Teddy Bear",
+            "Light Brown Teddy Bear Lying on Back",
+            "Light Brown Teddy Bear Wearing Blue Graduation Cap",
+            "Brown Teddy Bear Wearing Red Ribbon"
+        ],
+        "test": [
+            "Orange Football Themed Teddy Bear",
+            "Small Dark Brown Teddy Bear",
+            "White Bear Wearing Graduation Cap",
+            "Wedding Dress Teddy Bear"
+        ]
+    },
+    {
+        "taxonomy_id": "Telephone",
+        "taxonomy_name": "Telephone",
+        "train": [
+            "Beige Desk Phone",
+            "Metallic Rotary Dial Telephone",
+            "Vintage Black and Gold Rotary Telephone",
+            "Black Desk Telephone",
+            "Sanyo Sprint",
+            "Silver and Blue Desk Phone",
+            "White Rotary Dial Telephone",
+            "Vintage Black Candlestick Telephone",
+            "Silver AT&T Home Phone",
+            "Black Nokia Phone",
+            "Silver Home Panasonic Phone",
+            "Panasonic Beige Desk Phone",
+            "White AT&T Desk Telephone",
+            "AT&T Flip Phone",
+            "Vtech Black Desk Telephone",
+            "Black Cisco Desk Phone"
+        ],
+        "test": [
+            "AT&T Silver Home Phone",
+            "Thomson Electronics Phone",
+            "LG Silver Flip Phone",
+            "Oki Black Desk Telephone"
+        ]
+    },
+    {
+        "taxonomy_id": "Toaster",
+        "taxonomy_name": "Toaster",
+        "train": [
+            "Hamilton Beach Silver Toaster",
+            "Black and Decker Black Toaster",
+            "InnoLife Toaster",
+            "Blue Hot Dog Toaster",
+            "Black Betty Crocker Toaster",
+            "Red Hot Dog Toaster",
+            "Silver Oster Toaster",
+            "AmazonBasics Black Toaster",
+            "R2D2 Toaster",
+            "Hamilton Beach Black Shiny Toaster",
+            "Hello Kitty Toaster",
+            "Hamilton Beach Toaster",
+            "Sunbeam Toaster",
+            "White Proctor Silex Toaster",
+            "Westinghouse 4 Slot Toaster",
+            "Black Oster Toaster"
+        ],
+        "test": [
+            "Hamilton Beach Toaster Black",
+            "Black Black and Decker Toaster",
+            "Silver Hamilton Beach Toaster",
+            "Red Shiny Hamilton Toaster"
+        ]
+    },
+    {
+        "taxonomy_id": "Train (Model)",
+        "taxonomy_name": "Train (Model)",
+        "train": [
+            "Silver Passenger Train",
+            "Silver Pacific Line Train",
+            "Thomas the Train Engine Toy",
+            "Black Iron Train",
+            "Red and Gold Toy Train",
+            "New York Subway Train",
+            "Dark Green Train",
+            "Duplo Toy Train",
+            "Caterpillar Train",
+            "Red Iron Train Wagon",
+            "Black and Red Train",
+            "Toy Subway",
+            "Chinese Speed Train",
+            "Christmas Themed Toy Train",
+            "Black Coal Train",
+            "Jumbo Toy Train"
+        ],
+        "test": [
+            "Motion Rapidity Train",
+            "Red Train",
+            "Red Cargo Train",
+            "Brown Cargo Train"
+        ]
+    }
+]
