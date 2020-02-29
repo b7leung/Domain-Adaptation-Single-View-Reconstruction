@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import random
+from tqdm import tqdm
 import torch
 import torch.backends.cudnn
 import torch.utils.data
@@ -26,7 +27,7 @@ from models.refiner import Refiner
 from models.merger import Merger
 
 
-def train_net(cfg):
+def train_net(cfg, output_dir):
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
     torch.backends.cudnn.benchmark = True
 
@@ -151,9 +152,8 @@ def train_net(cfg):
                  % (dt.now(), init_epoch, best_iou, best_epoch))
 
     # Summary writer for TensorBoard
-    output_dir = os.path.join(cfg.DIR.OUT_PATH, '%s', dt.now().isoformat())
-    log_dir = output_dir % 'logs'
-    ckpt_dir = output_dir % 'checkpoints'
+    log_dir = os.path.join(output_dir, 'logs')
+    ckpt_dir = os.path.join(output_dir, 'checkpoints')
     train_writer = SummaryWriter(os.path.join(log_dir, 'train'))
     val_writer = SummaryWriter(os.path.join(log_dir, 'test'))
 
@@ -257,7 +257,7 @@ def train_net(cfg):
                 (dt.now(), epoch_idx + 2, cfg.TRAIN.NUM_EPOCHES, n_views_rendering))
 
         # Validate the training models
-        iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger)
+        iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger, save_num=0)
 
         # Save weights to file
         if (epoch_idx + 1) % cfg.TRAIN.SAVE_FREQ == 0:

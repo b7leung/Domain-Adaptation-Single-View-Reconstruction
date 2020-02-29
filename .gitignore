@@ -109,3 +109,7 @@ ENV/
 output/
 runs/
 saved_params/
+caches/
+
+test.ipynb
+test.py

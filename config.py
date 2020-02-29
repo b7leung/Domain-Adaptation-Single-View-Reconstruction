@@ -59,6 +59,7 @@ __C.DATASET.TEST_DATASET                    = 'ShapeNet'
 
 __C.DATASET.CLASSES_TO_USE                  = None
 #__C.DATASET.CLASSES_TO_USE                  = ['car']
+#__C.DATASET.CLASSES_TO_USE                  = ['cabinet']
 
 
 #
@@ -80,6 +81,7 @@ __C.CONST.CROP_IMG_H                        = 128       # Dummy property for Pas
 #
 __C.DIR                                     = edict()
 __C.DIR.OUT_PATH                            = './output'
+__C.DIR.DATASET_CACHE_PATH                  = './caches/dataset_file_caches'
 __C.DIR.RANDOM_BG_PATH                      = '/home/hzxie/Datasets/SUN2012/JPEGImages'
 
 #
@@ -126,3 +128,4 @@ __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
 __C.TEST                                    = edict()
 __C.TEST.RANDOM_BG_COLOR_RANGE              = [[240, 240], [240, 240], [240, 240]]
 __C.TEST.VOXEL_THRESH                       = [.2, .3, .4, .5]
+__C.TEST.SAVE_NUM                           = 0

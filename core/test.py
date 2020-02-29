@@ -28,11 +28,7 @@ from models.refiner import Refiner
 from models.merger import Merger
 
 def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
-        test_writer=None, encoder=None, decoder=None, refiner=None, merger=None, save_num=0):
-
-    # creating output folder
-    #if not os.path.exists(output_dir):
-        #os.makedirs(output_dir)
+        test_writer=None, encoder=None, decoder=None, refiner=None, merger=None):
 
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
     torch.backends.cudnn.benchmark = True
@@ -200,7 +196,7 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
                 curr_volumes = [(generated_volume, "reconstructed")]
                     
             # save gt reconstruction, estimated reconstruction, and input images 
-            if output_dir and (save_count[class_name] < save_num or save_num == -1):
+            if output_dir and (save_count[class_name] < cfg.TEST.SAVE_NUM or cfg.TEST.SAVE_NUM == -1):
                 img_dir = os.path.join(output_dir, class_name, sample_name)
                 if not os.path.exists(img_dir):
                     os.makedirs(img_dir)
@@ -222,17 +218,6 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
                 
                 save_count[class_name] += 1
 
-                # Append generated volumes to TensorBoard
-                # Volume Visualization
-                #gv = generated_volume.cpu().numpy()
-                #rendering_views = utils.binvox_visualization.get_volume_views(gv, os.path.join(img_dir, 'test'),
-                #                                                              epoch_idx)
-                #test_writer.add_image('Test Sample#%02d/Volume Reconstructed' % sample_idx, rendering_views, epoch_idx)
-
-                #gtv = ground_truth_volume.cpu().numpy()
-                #rendering_views = utils.binvox_visualization.get_volume_views(gtv, os.path.join(img_dir, 'test'),
-                #                                                              epoch_idx)
-                #test_writer.add_image('Test Sample#%02d/Volume GroundTruth' % sample_idx, rendering_views, epoch_idx)
  
     # Output testing results if possible (ie if we have GT volume)
     if has_gt_volume:

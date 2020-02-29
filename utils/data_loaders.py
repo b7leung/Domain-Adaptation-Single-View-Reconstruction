@@ -11,6 +11,8 @@ import scipy.io
 import scipy.ndimage
 import sys
 import torch.utils.data.dataset
+from tqdm import tqdm
+import pickle
 
 from datetime import datetime as dt
 from enum import Enum, unique
@@ -98,12 +100,13 @@ class ShapeNetDataLoader:
         self.dataset_taxonomy = None
         self.rendering_image_path_template = cfg.DATASETS.SHAPENET.RENDERING_PATH
         self.volume_path_template = cfg.DATASETS.SHAPENET.VOXEL_PATH
+        self.dataset_cache_path = cfg.DIR.DATASET_CACHE_PATH
 
         # Load all taxonomies of the dataset
         with open(cfg.DATASETS.SHAPENET.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
             self.dataset_taxonomy = json.loads(file.read())
 
-    def get_dataset(self, dataset_type, n_views_rendering, transforms=None, classes_filter=None):
+    def get_dataset(self, dataset_type, n_views_rendering, transforms=None, classes_filter=None, rebuild_cache=False):
         files = []
 
         # Load data for each category
@@ -111,17 +114,29 @@ class ShapeNetDataLoader:
             if classes_filter is None or taxonomy['taxonomy_name'] in classes_filter:
 
                 taxonomy_folder_name = taxonomy['taxonomy_id']
-                print('[INFO] %s Collecting files of Taxonomy[ID=%s, Name=%s]' % (dt.now(), taxonomy['taxonomy_id'],
-                                                                                taxonomy['taxonomy_name']))
-                samples = []
                 if dataset_type == DatasetType.TRAIN:
-                    samples = taxonomy['train']
+                    partition_name = "train"
                 elif dataset_type == DatasetType.TEST:
-                    samples = taxonomy['test']
+                    partition_name = "test"
                 elif dataset_type == DatasetType.VAL:
-                    samples = taxonomy['val']
+                    partition_name = "val"
 
-                files.extend(self.get_files_of_taxonomy(taxonomy_folder_name, samples))
+                cache_loc = os.path.join(self.dataset_cache_path, "shapenet", "{}_{}.p".format(taxonomy_folder_name, partition_name))
+
+                if rebuild_cache or not os.path.exists(cache_loc):
+                    print('[INFO] %s Rebuilding Cache -- Collecting files of Taxonomy[ID=%s, Name=%s, Partition=%s]' % (dt.now(), taxonomy['taxonomy_id'],
+                                                                                    taxonomy['taxonomy_name'], partition_name))
+                    
+                    samples = taxonomy[partition_name]
+                    files_of_taxonomy = self.get_files_of_taxonomy(taxonomy_folder_name, samples)
+                    pickle.dump(files_of_taxonomy, open(cache_loc, 'wb'))
+                
+                else:
+                    print('[INFO] %s Loading cache of Taxonomy[ID=%s, Name=%s, Partition=%s]' % (dt.now(), taxonomy['taxonomy_id'],
+                                                                                   taxonomy['taxonomy_name'], partition_name))
+                    files_of_taxonomy = pickle.load(open(cache_loc, 'rb'))
+                
+                files.extend(files_of_taxonomy)
 
         print('[INFO] %s Complete collecting files of the dataset. Total files: %d.' % (dt.now(), len(files)))
         return ShapeNetDataset(dataset_type, files, n_views_rendering, transforms)
@@ -130,7 +145,7 @@ class ShapeNetDataLoader:
         files_of_taxonomy = []
         n_samples = len(samples)
 
-        for sample_idx, sample_name in enumerate(samples):
+        for sample_idx, sample_name in enumerate(tqdm(samples)):
             # Get file path of volumes
             volume_file_path = self.volume_path_template % (taxonomy_folder_name, sample_name)
             if not os.path.exists(volume_file_path):

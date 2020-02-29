@@ -10,7 +10,16 @@
 # train cmd
 # python runner.py --gpu 2 --rand
 # test cmd
-#python runner.py --test --gpu 2 --weights=./saved_params/Pix2Vox-A-ShapeNet.pth --out output --save-num 3
+# python runner.py --test --gpu 2 --weights=./saved_params/Pix2Vox-A-ShapeNet.pth --out output --save-num 3
+
+# owild test
+#python runner.py --test --gpu 2 --weights=./saved_params/Pix2Vox-A-ShapeNet.pth --out output --save-num -1 --trial_comment TestOWILDSaveAllAuthorCkpt
+
+# training
+# python runner.py --gpu 1 --epoch 1
+
+#TODO: add frequently used stuff from config to cmd line
+
 
 import logging
 import matplotlib
@@ -40,19 +49,19 @@ def get_args_from_command_line():
     parser.add_argument(
         '--batch-size', dest='batch_size', help='name of the net', default=cfg.CONST.BATCH_SIZE, type=int)
     parser.add_argument('--epoch', dest='epoch', help='number of epoches', default=cfg.TRAIN.NUM_EPOCHES, type=int)
+    parser.add_argument('--num_views', dest='num_views', help='number of views to use', default=CONST.N_VIEWS_RENDERING, type=int)
     parser.add_argument('--weights', dest='weights', help='Initialize network from the weights file', default=None)
-    parser.add_argument('--out', dest='out_path', help='Set output path', default=cfg.DIR.OUT_PATH)
 
     parser.add_argument('--trial_comment', dest='trial_comment', help='Description of Trial', default="")
-    parser.add_argument('--save-num', dest='save_num', help='Save n samples per per class. If n=-1, then save all of them', default=0, type=int)
+    parser.add_argument('--save-num', dest='save_num', help='Save n samples per class. If -1, save all.', default=cfg.TEST.SAVE_NUM, type=int)
     args = parser.parse_args()
     return args
 
 
 def main():
+
     # Get args from command line
     args = get_args_from_command_line()
-
     if args.gpu_id is not None:
         cfg.CONST.DEVICE = args.gpu_id
     if not args.randomize:
@@ -61,29 +70,35 @@ def main():
         cfg.CONST.BATCH_SIZE = args.batch_size
     if args.epoch is not None:
         cfg.TRAIN.NUM_EPOCHES = args.epoch
-    if args.out_path is not None:
-        cfg.DIR.OUT_PATH = args.out_path
     if args.weights is not None:
         cfg.CONST.WEIGHTS = args.weights
         if not args.test:
             cfg.TRAIN.RESUME_TRAIN = True
-
-    # Print config
-    print('Use config:')
-    pprint(cfg)
+    
+    cfg.CONST.N_VIEWS_RENDERING = args.num_views
+    cfg.TEST.SAVE_NUM = args.save_num
 
     # Set GPU to use
     if type(cfg.CONST.DEVICE) == str:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE
 
-    # Start train/test process
+    # creating output folder for this trial run
     trial_name = time.strftime("%Y_%m_%d--%H_%M_%S") +"_"+ args.trial_comment
+    output_dir = os.path.join(cfg.DIR.OUT_PATH, trial_name)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        with open(os.path.join(output_dir,"run_cfg_info.txt"), 'wt') as f:
+            pprint(args, stream=f)
+            f.write("\n\n")
+            pprint(cfg,stream=f)
+
+    # Start train/test process
     if not args.test:
-        train_net(cfg)
+        train_net(cfg, output_dir = output_dir)
     else:
         if 'WEIGHTS' in cfg.CONST and os.path.exists(cfg.CONST.WEIGHTS):
             writer = SummaryWriter(os.path.join("runs",trial_name))
-            test_net(cfg, test_writer = writer, output_dir = os.path.join(args.out_path, trial_name), save_num = args.save_num)
+            test_net(cfg, test_writer = writer, output_dir = output_dir)
         else:
             print('[FATAL] %s Please specify the file path of checkpoint.' % (dt.now()))
             sys.exit(2)
