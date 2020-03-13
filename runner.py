@@ -18,9 +18,6 @@
 # training
 # python runner.py --gpu 1 --epoch 1
 
-#TODO: add frequently used stuff from config to cmd line
-
-
 import logging
 import matplotlib
 import multiprocessing as mp
@@ -48,12 +45,19 @@ def get_args_from_command_line():
     parser.add_argument('--test', dest='test', help='Test neural networks', action='store_true')
     parser.add_argument(
         '--batch-size', dest='batch_size', help='name of the net', default=cfg.CONST.BATCH_SIZE, type=int)
-    parser.add_argument('--epoch', dest='epoch', help='number of epoches', default=cfg.TRAIN.NUM_EPOCHES, type=int)
-    parser.add_argument('--num_views', dest='num_views', help='number of views to use', default=CONST.N_VIEWS_RENDERING, type=int)
+    parser.add_argument('--epoch', dest='epoch', help='num. of epoches. Only has effect for training', default=cfg.TRAIN.NUM_EPOCHES, type=int)
+    parser.add_argument('--num_views', dest='num_views', help='number of views to use', default=cfg.CONST.N_VIEWS_RENDERING, type=int)
     parser.add_argument('--weights', dest='weights', help='Initialize network from the weights file', default=None)
 
     parser.add_argument('--trial_comment', dest='trial_comment', help='Description of Trial', default="")
-    parser.add_argument('--save-num', dest='save_num', help='Save n samples per class. If -1, save all.', default=cfg.TEST.SAVE_NUM, type=int)
+    parser.add_argument('--save_num', dest='save_num', help='Save n samples per class. If -1, save all.', default=cfg.TEST.SAVE_NUM, type=int)
+    parser.add_argument('--classify', dest='classify', help='also perform classification', action='store_true', default=cfg.NETWORK.USE_CLASSIFIER)
+    parser.add_argument('--classes', dest = "classes_to_use", nargs='+', help='Classes to use', default = None)
+
+    parser.add_argument(
+        '--test_dataset', dest='test_dataset', help='What dataset to test on.', default="ShapeNet", type=str)
+    parser.add_argument(
+        '--train_dataset', dest='train_dataset', help='What dataset to train on.', default="ShapeNet", type=str)    
     args = parser.parse_args()
     return args
 
@@ -74,16 +78,30 @@ def main():
         cfg.CONST.WEIGHTS = args.weights
         if not args.test:
             cfg.TRAIN.RESUME_TRAIN = True
-    
     cfg.CONST.N_VIEWS_RENDERING = args.num_views
     cfg.TEST.SAVE_NUM = args.save_num
+    cfg.NETWORK.USE_CLASSIFIER = args.classify
+    cfg.DATASET.CLASSES_TO_USE = args.classes_to_use
+    if args.test_dataset in cfg.DATASETS.TEST_AVAILABLE:
+        cfg.DATASET.TEST_DATASET = args.test_dataset
+    else:
+        print('[FATAL] %s Invalid test dataset.' % (dt.now()))
+        sys.exit(2)
+    if args.train_dataset in cfg.DATASETS.TRAIN_AVAILABLE:
+        cfg.DATASET.TRAIN_DATASET = args.train_dataset
+    else:
+        print('[FATAL] %s Invalid train dataset.' % (dt.now()))
+        sys.exit(2)
+
 
     # Set GPU to use
     if type(cfg.CONST.DEVICE) == str:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE
 
+
     # creating output folder for this trial run
-    trial_name = time.strftime("%Y_%m_%d--%H_%M_%S") +"_"+ args.trial_comment
+    mode = "TEST" if args.test else "TRAIN"
+    trial_name = time.strftime("%Y_%m_%d--%H_%M_%S") +"_"+ args.trial_comment+"_"+mode
     output_dir = os.path.join(cfg.DIR.OUT_PATH, trial_name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -92,13 +110,14 @@ def main():
             f.write("\n\n")
             pprint(cfg,stream=f)
 
+
     # Start train/test process
     if not args.test:
         train_net(cfg, output_dir = output_dir)
     else:
         if 'WEIGHTS' in cfg.CONST and os.path.exists(cfg.CONST.WEIGHTS):
-            writer = SummaryWriter(os.path.join("runs",trial_name))
-            test_net(cfg, test_writer = writer, output_dir = output_dir)
+            #writer = SummaryWriter(os.path.join("runs",trial_name))
+            test_net(cfg, output_dir = output_dir)
         else:
             print('[FATAL] %s Please specify the file path of checkpoint.' % (dt.now()))
             sys.exit(2)

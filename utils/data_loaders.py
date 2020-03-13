@@ -38,17 +38,32 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
         self.file_list = file_list
         self.transforms = transforms
         self.n_views_rendering = n_views_rendering
+        self.shapenet_cls_mapping = {
+            "02691156":0,
+            "02828884":1,
+            "02933112":2,
+            "02958343":3,
+            "03001627":4,
+            "03211117":5,
+            "03636649":6,
+            "03691459":7,
+            "04090263":8,
+            "04256520":9,
+            "04379243":10,
+            "04401088":11,
+            "04530566":12
+        }
 
     def __len__(self):
         return len(self.file_list)
 
     def __getitem__(self, idx):
-        taxonomy_name, sample_name, rendering_images, volume = self.get_datum(idx)
+        taxonomy_name, sample_name, rendering_images, volume, class_labels = self.get_datum(idx)
 
         if self.transforms:
             rendering_images = self.transforms(rendering_images)
 
-        return taxonomy_name, sample_name, rendering_images, volume
+        return taxonomy_name, sample_name, rendering_images, volume, class_labels
 
     def set_n_views_rendering(self, n_views_rendering):
         self.n_views_rendering = n_views_rendering
@@ -58,6 +73,9 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
         sample_name = self.file_list[idx]['sample_name']
         rendering_image_paths = self.file_list[idx]['rendering_images']
         volume_path = self.file_list[idx]['volume']
+
+        # converting class names to classification labels
+        class_label = self.shapenet_cls_mapping[taxonomy_name]
 
         # Get data of rendering images
         if self.dataset_type == DatasetType.TRAIN:
@@ -73,7 +91,7 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
             rendering_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
             if len(rendering_image.shape) < 3:
                 print('[FATAL] %s It seems that there is something wrong with the image file %s' %
-                      (dt.now(), rendering_image_path))
+                      (dt.now(), image_path))
                 sys.exit(2)
 
             rendering_images.append(rendering_image)
@@ -88,8 +106,8 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
             with open(volume_path, 'rb') as f:
                 volume = utils.binvox_rw.read_as_3d_array(f)
                 volume = volume.data.astype(np.float32)
-
-        return taxonomy_name, sample_name, np.asarray(rendering_images), volume
+        
+        return taxonomy_name, sample_name, np.asarray(rendering_images), volume, class_label
 
 
 # //////////////////////////////// = End of ShapeNetDataset Class Definition = ///////////////////////////////// #
@@ -98,7 +116,12 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
 class ShapeNetDataLoader:
     def __init__(self, cfg):
         self.dataset_taxonomy = None
-        self.rendering_image_path_template = cfg.DATASETS.SHAPENET.RENDERING_PATH
+        if cfg.DATASET.USE_PLACES:
+            self.rendering_image_path_template = cfg.DATASETS.SHAPENET.RENDERING_PATH_OnPlaces
+            self.cache_folder_name = 'shapenet_onplaces'
+        else:
+            self.rendering_image_path_template = cfg.DATASETS.SHAPENET.RENDERING_PATH
+            self.cache_folder_name = 'shapenet'
         self.volume_path_template = cfg.DATASETS.SHAPENET.VOXEL_PATH
         self.dataset_cache_path = cfg.DIR.DATASET_CACHE_PATH
 
@@ -121,7 +144,8 @@ class ShapeNetDataLoader:
                 elif dataset_type == DatasetType.VAL:
                     partition_name = "val"
 
-                cache_loc = os.path.join(self.dataset_cache_path, "shapenet", "{}_{}.p".format(taxonomy_folder_name, partition_name))
+
+                cache_loc = os.path.join(self.dataset_cache_path, self.cache_folder_name, "{}_{}.p".format(taxonomy_folder_name, partition_name))
 
                 if rebuild_cache or not os.path.exists(cache_loc):
                     print('[INFO] %s Rebuilding Cache -- Collecting files of Taxonomy[ID=%s, Name=%s, Partition=%s]' % (dt.now(), taxonomy['taxonomy_id'],
@@ -461,10 +485,10 @@ class Pix3dDataLoader:
 
 class ODDSDataLoader:
     def __init__(self, cfg):
-        #self.rendering_image_path_template = cfg.DATASETS.OWILD.RENDERING_PATH
+        self.rendering_image_path_template = None
 
         # Load all taxonomies of the dataset
-        self.dataset_taxonomy = None
+        self.dataset_taxonomy = []
         #with open(cfg.DATASETS.OWILD.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
         #    self.dataset_taxonomy = json.loads(file.read())
 
@@ -545,12 +569,12 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
         return len(self.file_list)
 
     def __getitem__(self, idx):
-        taxonomy_name, sample_name, rendering_images, volume = self.get_datum(idx)
+        taxonomy_name, sample_name, rendering_images, volume, class_label = self.get_datum(idx)
 
         if self.transforms:
             rendering_images = self.transforms(rendering_images)
 
-        return taxonomy_name, sample_name, rendering_images, volume
+        return taxonomy_name, sample_name, rendering_images, volume, class_label
 
     def set_n_views_rendering(self, n_views_rendering):
         self.n_views_rendering = n_views_rendering
@@ -575,13 +599,14 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
             rendering_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
             if len(rendering_image.shape) < 3:
                 print('[FATAL] %s It seems that there is something wrong with the image file %s' %
-                      (dt.now(), rendering_image_path))
+                      (dt.now(), image_path))
                 sys.exit(2)
 
             rendering_images.append(rendering_image)
 
-
-        return taxonomy_name, sample_name, np.asarray(rendering_images), 0
+        #TODO: fix debt, class 0 rn
+        
+        return taxonomy_name, sample_name, np.asarray(rendering_images), 0, 0
         #return taxonomy_name, sample_name, np.asarray(rendering_images), volume
 # /////////////////////////////// = End of 3D-ODDS Class Definition = /////////////////////////////// #
 

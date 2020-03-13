@@ -26,9 +26,10 @@ from models.encoder import Encoder
 from models.decoder import Decoder
 from models.refiner import Refiner
 from models.merger import Merger
+from models.classifier import Classifier
 
 def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
-        test_writer=None, encoder=None, decoder=None, refiner=None, merger=None):
+        test_writer=None, encoder=None, decoder=None, refiner=None, merger=None, classifier=None):
 
     # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
     torch.backends.cudnn.benchmark = True
@@ -40,7 +41,7 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
     taxonomies = {t['taxonomy_id']: t for t in taxonomies}
 
     # setting up dataset-specific properties
-
+    # TODO: check if these make sense
     IMG_SIZE = cfg.CONST.IMG_H, cfg.CONST.IMG_W
     CROP_SIZE = cfg.CONST.CROP_IMG_H, cfg.CONST.CROP_IMG_W
     if cfg.DATASET.TEST_DATASET == "ShapeNet":
@@ -52,8 +53,8 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
             utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
             utils.data_transforms.ToTensor(),
         ])
+        num_classes = cfg.DATASETS.SHAPENET.NUM_CLASSES
     elif cfg.DATASET.TEST_DATASET in ["OWILD", "OOWL"]:
-        # OWILD/OOWL/OOWL_Segmented case
         has_gt_volume = False
         test_transforms = utils.data_transforms.Compose([
             utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
@@ -61,19 +62,21 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
             #utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
             utils.data_transforms.ToTensor(),
         ])
+        # TODO: classify debt
+        num_classes = 3
     elif cfg.DATASET.TEST_DATASET == "OOWL_SEGMENTED":
         has_gt_volume = False
         test_transforms = utils.data_transforms.Compose([
             utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
             utils.data_transforms.RandomBackground(cfg.TEST.RANDOM_BG_COLOR_RANGE),
-            #utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
+            utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
             utils.data_transforms.ToTensor(),
         ])
+        num_classes = 3
 
 
     # Set up data loader
     if test_data_loader is None:
-
 
         dataset_loader = utils.data_loaders.DATASET_LOADER_MAPPING[cfg.DATASET.TEST_DATASET](cfg)
         test_data_loader = torch.utils.data.DataLoader(
@@ -84,22 +87,20 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
             pin_memory=True,
             shuffle=False)
 
-    #for (taxonomy_id, sample_name, rendering_images, ground_truth_volume) in test_data_loader:
-    #    print("{} -- {}".format(taxonomy_id[0],sample_name[0]))
-    #return
-
-    # Set up networks
+    # Set up networks from saved parameters if not explicitly passed in
     if decoder is None or encoder is None:
         encoder = Encoder(cfg)
         decoder = Decoder(cfg)
         refiner = Refiner(cfg)
         merger = Merger(cfg)
+        classifier = Classifier(cfg, num_classes)
 
         if torch.cuda.is_available():
             encoder = torch.nn.DataParallel(encoder).cuda()
             decoder = torch.nn.DataParallel(decoder).cuda()
             refiner = torch.nn.DataParallel(refiner).cuda()
             merger = torch.nn.DataParallel(merger).cuda()
+            classifier = torch.nn.DataParallel(classifier).cuda()
 
         print('[INFO] %s Loading weights from %s ...' % (dt.now(), cfg.CONST.WEIGHTS))
         checkpoint = torch.load(cfg.CONST.WEIGHTS)
@@ -111,42 +112,61 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
             refiner.load_state_dict(checkpoint['refiner_state_dict'])
         if cfg.NETWORK.USE_MERGER:
             merger.load_state_dict(checkpoint['merger_state_dict'])
+        if cfg.NETWORK.USE_CLASSIFIER:
+            classifier.load_state_dict(checkpoint['classifier_state_dict'])
 
     # Set up loss functions
-    bce_loss = torch.nn.BCELoss()
+    bce_loss = torch.nn.BCELoss() # for voxels
+    ce_loss = torch.nn.CrossEntropyLoss() # for classification
 
     # Testing loop
     n_samples = len(test_data_loader)
     test_iou = dict()
     encoder_losses = utils.network_utils.AverageMeter()
     refiner_losses = utils.network_utils.AverageMeter()
+    classification_losses = utils.network_utils.AverageMeter()
 
     # Switch models to evaluation mode
     encoder.eval()
     decoder.eval()
     refiner.eval()
     merger.eval()
+    classifier.eval()
 
     # keeps track of how many examples of each class has been saved
     save_count = {}
+    latent_vectors = []
+    classification_labels =[]
 
-
-    for sample_idx, (taxonomy_id, sample_name, rendering_images, ground_truth_volume) in enumerate(test_data_loader):
+    for sample_idx, (taxonomy_id, sample_name, rendering_images,
+        ground_truth_volume, ground_truth_class_labels) in enumerate(test_data_loader):
 
         taxonomy_id = taxonomy_id[0] if isinstance(taxonomy_id[0], str) else taxonomy_id[0].item()
         sample_name = sample_name[0]
+
+
         class_name = taxonomies[taxonomy_id]['taxonomy_name']
         if class_name not in save_count:
             save_count[class_name] = 0
+
+        # TODO: debt here. need a clean way to fix classifier compatability
+        if cfg.NETWORK.USE_CLASSIFIER:
+            num_images = rendering_images.shape[1]
+            for i in range(num_images):
+                classification_labels.append(ground_truth_class_labels.item())
 
         with torch.no_grad():
             # Get data from data loader
             rendering_images = utils.network_utils.var_or_cuda(rendering_images)
             ground_truth_volume = utils.network_utils.var_or_cuda(ground_truth_volume)
+            
 
-            # Test the encoder, decoder, refiner and merger
+            # Test the encoder, decoder, refiner, merger, and classifier
             image_features = encoder(rendering_images)
             raw_features, generated_volume = decoder(image_features)
+            for instance_features in image_features:
+                for view_features in instance_features:
+                    latent_vectors.append(view_features.reshape(-1))
 
             if cfg.NETWORK.USE_MERGER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_MERGER:
                 generated_volume = merger(raw_features, generated_volume)
@@ -156,7 +176,20 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
             if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
                 generated_volume = refiner(generated_volume)
 
-            # only compute losses/metrics if we have access to ground truth volume
+            if cfg.NETWORK.USE_CLASSIFIER:
+                ground_truth_class_labels = utils.network_utils.var_or_cuda(ground_truth_class_labels)
+                class_predictions = classifier(image_features)
+                # combining batch and views for ce loss
+                class_predictions = class_predictions.reshape(-1,num_classes)
+                # each view has the same class
+                ground_truth_class_labels = ground_truth_class_labels.repeat(cfg.CONST.N_VIEWS_RENDERING,1).T
+                ground_truth_class_labels = ground_truth_class_labels.reshape(-1)
+                #classification_loss = ce_loss(class_predictions, ground_truth_class_labels) 
+                classification_accuracy = (ground_truth_class_labels == torch.argmax(class_predictions, 1)).sum() / ground_truth_class_labels.shape[0]
+            else:
+                classification_accuracy = torch.tensor([-1])
+
+            # only compute shape based losses/metrics if we have access to ground truth volume
             if has_gt_volume:
                 encoder_loss = bce_loss(generated_volume, ground_truth_volume) * 10
                 if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
@@ -167,6 +200,7 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
                 # Append loss and accuracy to average metrics
                 encoder_losses.update(encoder_loss.item())
                 refiner_losses.update(refiner_loss.item())
+                classification_losses.update(classification_accuracy.item())
 
                 # IoU per sample
                 sample_iou = []
@@ -183,15 +217,15 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
                 test_iou[taxonomy_id]['iou'].append(sample_iou)
 
                 # Print sample loss and IoU
-                print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s' % \
+                print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s, ClsAcc=%.4f' % \
                     (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, encoder_loss.item(), \
-                    refiner_loss.item(), ['%.4f' % si for si in sample_iou]))
+                    refiner_loss.item(), ['%.4f' % si for si in sample_iou],classification_accuracy.item()))
 
                 curr_volumes = [(generated_volume, "reconstructed"), (ground_truth_volume, "ground_truth")]
 
             else:
-                print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = N/A RLoss = N/A IoU = N/A' % \
-                    (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name))
+                print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = N/A RLoss = N/A IoU = N/A, ClsAcc=%.4f' % \
+                    (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, classification_accuracy.item()))
 
                 curr_volumes = [(generated_volume, "reconstructed")]
                     
@@ -218,8 +252,13 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
                 
                 save_count[class_name] += 1
 
- 
-    # Output testing results if possible (ie if we have GT volume)
+    # using latent vectors to project to tdsn
+    latent_vectors = [lv.cpu().numpy() for lv in latent_vectors]
+    latent_vectors = np.array(latent_vectors)
+
+    # Output testing results
+    # Shape based results are only possible if we have GT volume
+    iou = 0
     if has_gt_volume:
         mean_iou = []
         for taxonomy_id in test_iou:
@@ -251,6 +290,8 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
             print('%.4f' % mi, end='\t')
         print('\n')
 
+        print("Classification accuracy: {}".format(classification_losses.avg))
+
         # Add testing results to TensorBoard
         max_iou = np.max(mean_iou)
         if not test_writer is None:
@@ -258,6 +299,6 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
             test_writer.add_scalar('Refiner/EpochLoss', refiner_losses.avg, epoch_idx)
             test_writer.add_scalar('Refiner/IoU', max_iou, epoch_idx)
 
-        return max_iou
-    else:
-        return 0
+        iou = max_iou
+    # returning assets/useful data to be used for later visualization
+    return [iou, classification_labels, latent_vectors]

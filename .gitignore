@@ -103,13 +103,16 @@ ENV/
 # macOS
 .DS_Store
 
+# vs code
+.vscode/
+
 # Datasets
 
 # Output
 output/
 runs/
 saved_params/
-caches/
 
 test.ipynb
 test.py
+run.ipynb

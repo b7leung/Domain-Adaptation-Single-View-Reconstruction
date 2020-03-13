@@ -12,11 +12,16 @@ cfg                                         = __C
 #
 dataset_folder = '/data7/brandon/research/OOWL/datasets/'
 __C.DATASETS                                = edict()
+__C.DATASETS.TRAIN_AVAILABLE                 = ["ShapeNet"]
+__C.DATASETS.TEST_AVAILABLE                 = ["ShapeNet", "OWILD", "OOWL", "OOWL_SEGMENTED"]
+
 __C.DATASETS.SHAPENET                       = edict()
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/ShapeNet.json'
 # __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH  = './datasets/PascalShapeNet.json'
 __C.DATASETS.SHAPENET.RENDERING_PATH        = dataset_folder +"ShapeNet/ShapeNetRendering/%s/%s/rendering/%02d.png"
+__C.DATASETS.SHAPENET.RENDERING_PATH_OnPlaces = dataset_folder +"ShapeNet/ShapeNetRendering_OnPlaces/%s/%s/rendering/%02d.png"
 __C.DATASETS.SHAPENET.VOXEL_PATH            = dataset_folder+'ShapeNet/ShapeNetVox32/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.NUM_CLASSES           = 13
 
 __C.DATASETS.PASCAL3D                       = edict()
 __C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'
@@ -49,17 +54,13 @@ __C.DATASET                                 = edict()
 __C.DATASET.MEAN                            = [0.5, 0.5, 0.5]
 __C.DATASET.STD                             = [0.5, 0.5, 0.5]
 __C.DATASET.TRAIN_DATASET                   = 'ShapeNet'
+__C.DATASET.USE_PLACES                      = True
 
 __C.DATASET.TEST_DATASET                    = 'ShapeNet'
-#__C.DATASET.TEST_DATASET                    = 'OWILD'
-#__C.DATASET.TEST_DATASET                    = 'OOWL'
-#__C.DATASET.TEST_DATASET                    = 'OOWL_SEGMENTED'
 # __C.DATASET.TEST_DATASET                  = 'Pascal3D'
 # __C.DATASET.TEST_DATASET                  = 'Pix3D'
 
 __C.DATASET.CLASSES_TO_USE                  = None
-#__C.DATASET.CLASSES_TO_USE                  = ['car']
-#__C.DATASET.CLASSES_TO_USE                  = ['cabinet']
 
 
 #
@@ -91,7 +92,9 @@ __C.NETWORK                                 = edict()
 __C.NETWORK.LEAKY_VALUE                     = .2
 __C.NETWORK.TCONV_USE_BIAS                  = False
 __C.NETWORK.USE_REFINER                     = True
-__C.NETWORK.USE_MERGER                      = True
+__C.NETWORK.USE_MERGER                      = True # if false, just does an average
+__C.NETWORK.USE_CLASSIFIER                  = False
+
 
 #
 # Training
@@ -108,14 +111,17 @@ __C.TRAIN.RANDOM_BG_COLOR_RANGE             = [[225, 255], [225, 255], [225, 255
 __C.TRAIN.POLICY                            = 'adam'        # available options: sgd, adam
 __C.TRAIN.EPOCH_START_USE_REFINER           = 0
 __C.TRAIN.EPOCH_START_USE_MERGER            = 0
+__C.TRAIN.EPOCH_START_USE_CLASSIFIER        = 0
 __C.TRAIN.ENCODER_LEARNING_RATE             = 1e-3
 __C.TRAIN.DECODER_LEARNING_RATE             = 1e-3
 __C.TRAIN.REFINER_LEARNING_RATE             = 1e-3
 __C.TRAIN.MERGER_LEARNING_RATE              = 1e-4
+__C.TRAIN.CLASSIFIER_LEARNING_RATE             = 1e-3
 __C.TRAIN.ENCODER_LR_MILESTONES             = [150]
 __C.TRAIN.DECODER_LR_MILESTONES             = [150]
 __C.TRAIN.REFINER_LR_MILESTONES             = [150]
 __C.TRAIN.MERGER_LR_MILESTONES              = [150]
+__C.TRAIN.CLASSIFIER_LR_MILESTONES          = [150]
 __C.TRAIN.BETAS                             = (.9, .999)
 __C.TRAIN.MOMENTUM                          = .9
 __C.TRAIN.GAMMA                             = .5
