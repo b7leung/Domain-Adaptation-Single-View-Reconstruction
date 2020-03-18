@@ -10,6 +10,8 @@ from tqdm import tqdm
 import torch
 import torch.backends.cudnn
 import torch.utils.data
+import pandas as pd
+import copy
 
 import utils.binvox_visualization
 import utils.data_loaders
@@ -198,10 +200,23 @@ def train_net(cfg, output_dir):
     train_writer = SummaryWriter(os.path.join(log_dir, 'train'))
     val_writer = SummaryWriter(os.path.join(log_dir, 'test'))
 
+    class_mean_features = torch.load(cfg.DIR.MEAN_FEATURES_PATH)
 
+    # dataframe used for training details
+    training_record_df = pd.DataFrame()
 
+    # freeze layers if trying residual 
+    if cfg.NETWORK.ADD_MEAN_FEATURES:
+        for param in merger.parameters():
+            param.requires_grad = False
+        for param in refiner.parameters():
+            param.requires_grad = False
+        for param in decoder.parameters():
+            param.requires_grad = False
+
+    #prev_decoder = copy.deepcopy(decoder)
     # Training loop
-    for epoch_idx in range(init_epoch, cfg.TRAIN.NUM_EPOCHES):
+    for epoch_idx in tqdm(range(init_epoch, cfg.TRAIN.NUM_EPOCHES), desc = "Epoch"):
         # Tick / tock
         epoch_start_time = time()
 
@@ -211,13 +226,7 @@ def train_net(cfg, output_dir):
         encoder_losses = utils.network_utils.AverageMeter()
         refiner_losses = utils.network_utils.AverageMeter()
         classification_losses = utils.network_utils.AverageMeter()
-
-        # Adjust learning rate
-        encoder_lr_scheduler.step()
-        decoder_lr_scheduler.step()
-        refiner_lr_scheduler.step()
-        merger_lr_scheduler.step()
-        classifier_lr_scheduler.step()
+        l2_losses = utils.network_utils.AverageMeter()
 
         # switch models to training mode
         encoder.train()
@@ -228,8 +237,14 @@ def train_net(cfg, output_dir):
 
         batch_end_time = time()
         n_batches = len(train_data_loader)
-        for batch_idx, (taxonomy_names, sample_names, rendering_images,
-                        ground_truth_volumes, ground_truth_class_labels) in enumerate(train_data_loader):
+        for batch_idx, batch_data in enumerate(tqdm(train_data_loader, desc = "Minibatch", leave = False)):
+
+            (taxonomy_id, sample_names, rendering_images,
+                ground_truth_volumes, ground_truth_class_labels) = batch_data 
+            
+            #print("DECODER SAME: {}".format(utils.network_utils.models_equal(prev_decoder, decoder)))
+            #prev_decoder = copy.deepcopy(decoder)
+
             # Measure data time
             data_time.update(time() - batch_end_time)
 
@@ -240,6 +255,16 @@ def train_net(cfg, output_dir):
 
             # Train the encoder, decoder, refiner, merger, and classifier
             image_features = encoder(rendering_images)
+
+            # combine mean shape to encoded image_features as a weighted avg
+            batch_mean_features = utils.network_utils.get_batch_mean_features(class_mean_features,
+                                                                              image_features.shape, taxonomy_id)
+            if cfg.NETWORK.ADD_MEAN_FEATURES:
+                image_features = image_features + batch_mean_features
+            else:
+                image_features = (image_features*(1-cfg.NETWORK.MEAN_FEATURES_WEIGHT) 
+                                + batch_mean_features*cfg.NETWORK.MEAN_FEATURES_WEIGHT)
+
             class_predictions = classifier(image_features)
             raw_features, generated_volumes = decoder(image_features)
 
@@ -255,13 +280,21 @@ def train_net(cfg, output_dir):
                 generated_volumes = merger(raw_features, generated_volumes)
             else:
                 generated_volumes = torch.mean(generated_volumes, dim=1)
+
             encoder_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
+
+
 
             if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
                 generated_volumes = refiner(generated_volumes)
                 refiner_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
             else:
                 refiner_loss = encoder_loss
+
+            # adding l2 norm on residual
+            if cfg.NETWORK.ADD_MEAN_FEATURES:
+                l2_loss = cfg.NETWORK.RESIDUAL_LAMBDA*torch.norm(image_features)
+                refiner_loss = refiner_loss + l2_loss
 
             # Gradient decent
             encoder.zero_grad()
@@ -290,6 +323,7 @@ def train_net(cfg, output_dir):
             encoder_losses.update(encoder_loss.item())
             refiner_losses.update(refiner_loss.item())
             classification_losses.update(classification_loss.item())
+            l2_losses.update(l2_loss.item())
             # Append loss to TensorBoard
             n_itr = epoch_idx * n_batches + batch_idx
             train_writer.add_scalar('EncoderDecoder/BatchLoss', encoder_loss.item(), n_itr)
@@ -298,19 +332,28 @@ def train_net(cfg, output_dir):
             # Tick / tock
             batch_time.update(time() - batch_end_time)
             batch_end_time = time()
-            print('[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) EDLoss=%.4f RLoss=%.4f ClsLoss=%.4f' % \
-                (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, batch_idx + 1, n_batches, \
-                    batch_time.val, data_time.val, encoder_loss.item(), refiner_loss.item(), classification_loss.item()))
+            if cfg.PREFERENCES.VERBOSE:
+                print('[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) EDLoss=%.4f RLoss=%.4f ClsLoss=%.4f L2Loss= %.4f' % \
+                    (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, batch_idx + 1, n_batches, \
+                    batch_time.val, data_time.val, encoder_loss.item(), refiner_loss.item(), classification_loss.item(), l2_loss.item()))
 
+            training_record_df = training_record_df.append({"Epoch": epoch_idx, "Minibatch":batch_idx, "IoU":-1, "L2_Loss":l2_loss.item()}, ignore_index = True)
         # Append epoch loss to TensorBoard
         train_writer.add_scalar('EncoderDecoder/EpochLoss', encoder_losses.avg, epoch_idx + 1)
         train_writer.add_scalar('Refiner/EpochLoss', refiner_losses.avg, epoch_idx + 1)
 
+        # Adjust learning rate
+        encoder_lr_scheduler.step()
+        decoder_lr_scheduler.step()
+        refiner_lr_scheduler.step()
+        merger_lr_scheduler.step()
+        classifier_lr_scheduler.step()
+
         # Tick / tock
         epoch_end_time = time()
-        print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) EDLoss = %.4f RLoss = %.4f ClsLoss=%.4f' %
+        print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) EDLoss = %.4f RLoss = %.4f ClsLoss=%.4f L2Loss= %.4f' %
             (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, epoch_end_time - epoch_start_time, \
-                encoder_losses.avg, refiner_losses.avg, classification_losses.avg))
+                encoder_losses.avg, refiner_losses.avg, classification_losses.avg, l2_losses.avg))
 
         # Update Rendering Views
         if cfg.TRAIN.UPDATE_N_VIEWS_RENDERING:
@@ -321,6 +364,12 @@ def train_net(cfg, output_dir):
 
         # Validate the training models
         iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, val_writer, encoder, decoder, refiner, merger, classifier)[0]
+
+        # saving training record
+        training_record_df = training_record_df.append({"Epoch": epoch_idx, "Minibatch":-1, "IoU":iou, "L2_Loss":l2_losses.avg}, ignore_index = True)
+
+        training_record_df.to_pickle(os.path.join(output_dir, "training_record.pkl"))
+        print(pd.read_pickle(os.path.join(output_dir, "training_record.pkl")))
 
         # Save weights to file
         if (epoch_idx + 1) % cfg.TRAIN.SAVE_FREQ == 0:
@@ -345,3 +394,7 @@ def train_net(cfg, output_dir):
     # Close SummaryWriter for TensorBoard
     train_writer.close()
     val_writer.close()
+
+
+    # returning and saving assets/useful data to be used for later visualization
+    return

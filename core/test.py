@@ -11,6 +11,7 @@ import torch.backends.cudnn
 import torch.utils.data
 import torchvision.transforms
 import cv2
+from tqdm import tqdm
 
 import utils.binvox_visualization
 import utils.data_loaders
@@ -59,7 +60,7 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
         test_transforms = utils.data_transforms.Compose([
             utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
             #utils.data_transforms.RandomBackground(cfg.TEST.RANDOM_BG_COLOR_RANGE),
-            #utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
+            utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
             utils.data_transforms.ToTensor(),
         ])
         # TODO: classify debt
@@ -138,10 +139,14 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
     latent_vectors = []
     classification_labels =[]
 
-    for sample_idx, (taxonomy_id, sample_name, rendering_images,
-        ground_truth_volume, ground_truth_class_labels) in enumerate(test_data_loader):
+    class_mean_features = torch.load(cfg.DIR.MEAN_FEATURES_PATH)
 
-        taxonomy_id = taxonomy_id[0] if isinstance(taxonomy_id[0], str) else taxonomy_id[0].item()
+    for sample_idx, sample_data in enumerate(tqdm(test_data_loader, desc = "Testing", leave=False)):
+
+        (taxonomy_id_arr, sample_name, rendering_images,
+            ground_truth_volume, ground_truth_class_labels) = sample_data
+
+        taxonomy_id = taxonomy_id_arr[0] if isinstance(taxonomy_id_arr[0], str) else taxonomy_id_arr[0].item()
         sample_name = sample_name[0]
 
 
@@ -149,11 +154,9 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
         if class_name not in save_count:
             save_count[class_name] = 0
 
-        # TODO: debt here. need a clean way to fix classifier compatability
-        if cfg.NETWORK.USE_CLASSIFIER:
-            num_images = rendering_images.shape[1]
-            for i in range(num_images):
-                classification_labels.append(ground_truth_class_labels.item())
+        num_images = rendering_images.shape[1]
+        for i in range(num_images):
+            classification_labels.append(ground_truth_class_labels.item())
 
         with torch.no_grad():
             # Get data from data loader
@@ -163,6 +166,17 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
 
             # Test the encoder, decoder, refiner, merger, and classifier
             image_features = encoder(rendering_images)
+
+            # add mean shape to encoded image_features as a weighted avg
+            batch_mean_features = utils.network_utils.get_batch_mean_features(class_mean_features,
+                                                                              image_features.shape, taxonomy_id_arr)
+            if cfg.NETWORK.ADD_MEAN_FEATURES:
+                image_features = image_features + batch_mean_features
+            else:
+                image_features = (image_features*(1-cfg.NETWORK.MEAN_FEATURES_WEIGHT) 
+                                + batch_mean_features*cfg.NETWORK.MEAN_FEATURES_WEIGHT)
+
+
             raw_features, generated_volume = decoder(image_features)
             for instance_features in image_features:
                 for view_features in instance_features:
@@ -189,6 +203,8 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
             else:
                 classification_accuracy = torch.tensor([-1])
 
+            classification_losses.update(classification_accuracy.item())
+
             # only compute shape based losses/metrics if we have access to ground truth volume
             if has_gt_volume:
                 encoder_loss = bce_loss(generated_volume, ground_truth_volume) * 10
@@ -200,7 +216,6 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
                 # Append loss and accuracy to average metrics
                 encoder_losses.update(encoder_loss.item())
                 refiner_losses.update(refiner_loss.item())
-                classification_losses.update(classification_accuracy.item())
 
                 # IoU per sample
                 sample_iou = []
@@ -217,15 +232,17 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None, \
                 test_iou[taxonomy_id]['iou'].append(sample_iou)
 
                 # Print sample loss and IoU
-                print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s, ClsAcc=%.4f' % \
-                    (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, encoder_loss.item(), \
-                    refiner_loss.item(), ['%.4f' % si for si in sample_iou],classification_accuracy.item()))
+                if cfg.PREFERENCES.VERBOSE:
+                    print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s, ClsAcc=%.4f' % \
+                        (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, encoder_loss.item(), \
+                        refiner_loss.item(), ['%.4f' % si for si in sample_iou],classification_accuracy.item()))
 
                 curr_volumes = [(generated_volume, "reconstructed"), (ground_truth_volume, "ground_truth")]
 
             else:
-                print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = N/A RLoss = N/A IoU = N/A, ClsAcc=%.4f' % \
-                    (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, classification_accuracy.item()))
+                if cfg.PREFERENCES.VERBOSE:
+                    print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = N/A RLoss = N/A IoU = N/A, ClsAcc=%.4f' % \
+                        (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, classification_accuracy.item()))
 
                 curr_volumes = [(generated_volume, "reconstructed")]
                     

@@ -564,6 +564,15 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
         self.file_list = file_list
         self.transforms = transforms
         self.n_views_rendering = n_views_rendering
+        # TODO: Adapt to work with all classes, not just 6 overlapping
+        self.ODDS_class_mapping = {
+            "Airplane_Model": 0,
+            "Car_Model":3,
+            "Monitor":5,
+            "Lamp":6,
+            "Telephone":11,
+            "Boat_Model":12
+        }
 
     def __len__(self):
         return len(self.file_list)
@@ -584,7 +593,7 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
         sample_name = self.file_list[idx]['sample_name']
         rendering_image_paths = self.file_list[idx]['rendering_images']
         #volume_path = self.file_list[idx]['volume']
-
+        class_label = self.ODDS_class_mapping[taxonomy_name]
         # Get data of rendering images. If it's training, then we pick random views. Else, we pick in order
         if self.dataset_type == DatasetType.TRAIN:
             selected_rendering_image_paths = [
@@ -606,8 +615,8 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
 
         #TODO: fix debt, class 0 rn
         
-        return taxonomy_name, sample_name, np.asarray(rendering_images), 0, 0
-        #return taxonomy_name, sample_name, np.asarray(rendering_images), volume
+        return taxonomy_name, sample_name, np.asarray(rendering_images), 0, class_label
+
 # /////////////////////////////// = End of 3D-ODDS Class Definition = /////////////////////////////// #
 
 DATASET_LOADER_MAPPING = {

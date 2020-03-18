@@ -7,16 +7,6 @@
 # config
 # need matplotlib 3.0.3, tensorBoardX 1.2.0
 # torchvision 1.5? to be compatible with pillow
-# train cmd
-# python runner.py --gpu 2 --rand
-# test cmd
-# python runner.py --test --gpu 2 --weights=./saved_params/Pix2Vox-A-ShapeNet.pth --out output --save-num 3
-
-# owild test
-#python runner.py --test --gpu 2 --weights=./saved_params/Pix2Vox-A-ShapeNet.pth --out output --save-num -1 --trial_comment TestOWILDSaveAllAuthorCkpt
-
-# training
-# python runner.py --gpu 1 --epoch 1
 
 import logging
 import matplotlib
@@ -39,25 +29,29 @@ from core.test import test_net
 
 def get_args_from_command_line():
     parser = ArgumentParser(description='Parser of Runner of Pix2Vox')
-    parser.add_argument(
-        '--gpu', dest='gpu_id', help='GPU device id to use [cuda0]', default=cfg.CONST.DEVICE, type=str)
-    parser.add_argument('--rand', dest='randomize', help='Randomize (do not use a fixed seed)', action='store_true')
-    parser.add_argument('--test', dest='test', help='Test neural networks', action='store_true')
-    parser.add_argument(
-        '--batch-size', dest='batch_size', help='name of the net', default=cfg.CONST.BATCH_SIZE, type=int)
-    parser.add_argument('--epoch', dest='epoch', help='num. of epoches. Only has effect for training', default=cfg.TRAIN.NUM_EPOCHES, type=int)
-    parser.add_argument('--num_views', dest='num_views', help='number of views to use', default=cfg.CONST.N_VIEWS_RENDERING, type=int)
-    parser.add_argument('--weights', dest='weights', help='Initialize network from the weights file', default=None)
 
     parser.add_argument('--trial_comment', dest='trial_comment', help='Description of Trial', default="")
+    parser.add_argument('--gpu', dest='gpu_id', help='GPU device id to use [cuda0]', default=cfg.CONST.DEVICE, type=str)
+    parser.add_argument('--rand', dest='randomize', help='Randomize (do not use a fixed seed)', action='store_true')
+    parser.add_argument('--weights', dest='weights', help='Initialize network from the weights file', default=None)
+    parser.add_argument('--verbose', dest='verbose', help='print verbose', action='store_true', default=cfg.PREFERENCES.VERBOSE)
+    
+    parser.add_argument('--test_dataset', dest='test_dataset', help='What dataset to test on.', default="ShapeNet", type=str)
+    parser.add_argument('--train_dataset', dest='train_dataset', help='What dataset to train on.', default="ShapeNet", type=str)
+    parser.add_argument('--test', dest='test', help='Test neural networks', action='store_true')
+    parser.add_argument('--batch-size', dest='batch_size', help='name of the net', default=cfg.CONST.BATCH_SIZE, type=int)
+    parser.add_argument('--epoch', dest='epoch', help='num. of epoches. Only has effect for training', default=cfg.TRAIN.NUM_EPOCHES, type=int)
     parser.add_argument('--save_num', dest='save_num', help='Save n samples per class. If -1, save all.', default=cfg.TEST.SAVE_NUM, type=int)
-    parser.add_argument('--classify', dest='classify', help='also perform classification', action='store_true', default=cfg.NETWORK.USE_CLASSIFIER)
-    parser.add_argument('--classes', dest = "classes_to_use", nargs='+', help='Classes to use', default = None)
 
-    parser.add_argument(
-        '--test_dataset', dest='test_dataset', help='What dataset to test on.', default="ShapeNet", type=str)
-    parser.add_argument(
-        '--train_dataset', dest='train_dataset', help='What dataset to train on.', default="ShapeNet", type=str)    
+    parser.add_argument('--classes', dest = "classes_to_use", nargs='+', help='Classes to use', default = None)
+    parser.add_argument('--num_views', dest='num_views', help='number of views to use', default=cfg.CONST.N_VIEWS_RENDERING, type=int)
+    parser.add_argument('--classify', dest='classify', help='also perform classification', action='store_true', default=cfg.NETWORK.USE_CLASSIFIER)
+    parser.add_argument('--mean_features_weight', dest='mean_features_weight', help='Set mean feature weight', default=cfg.NETWORK.MEAN_FEATURES_WEIGHT, type = float)
+    parser.add_argument('--add_mean_features', dest='add_mean_features', help='add mean features instead of weighted average', action='store_true', default=cfg.NETWORK.ADD_MEAN_FEATURES)
+    parser.add_argument('--residual_lambda', dest='residual_lambda', help='if add mean features, determines weight of l2 for residual',  default=cfg.NETWORK.RESIDUAL_LAMBDA, type = float)
+    parser.add_argument('--no_refiner', dest='no_refiner', help='turn off refiner', action='store_true', default=False)
+    parser.add_argument('--no_merger', dest='no_merger', help='turn off merger', action='store_true', default=False)
+
     args = parser.parse_args()
     return args
 
@@ -92,6 +86,14 @@ def main():
     else:
         print('[FATAL] %s Invalid train dataset.' % (dt.now()))
         sys.exit(2)
+    cfg.NETWORK.MEAN_FEATURES_WEIGHT = args.mean_features_weight
+    cfg.NETWORK.ADD_MEAN_FEATURES = args.add_mean_features
+    cfg.PREFERENCES.VERBOSE = args.verbose
+    cfg.NETWORK.RESIDUAL_LAMBDA = args.residual_lambda
+    if args.no_refiner:
+        cfg.NETWORK.USE_REFINER = False
+    if args.no_merger:
+        cfg.NETWORK.USE_MERGER= False
 
 
     # Set GPU to use
@@ -131,6 +133,6 @@ if __name__ == '__main__':
     # Setup logger
     mp.log_to_stderr()
     logger = mp.get_logger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.WARNING)
 
     main()

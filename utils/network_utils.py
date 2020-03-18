@@ -29,6 +29,43 @@ def init_weights(m):
         torch.nn.init.constant_(m.bias, 0)
 
 
+# initalize the class mean shapes for the current batch's classes
+#TODO: disentangle this
+shapenetID2Name = {
+    "02691156":"aeroplane",
+    "02828884":"bench",
+    "02933112":"cabinet",
+    "02958343":"car",
+    "03001627":"chair",
+    "03211117":"display",
+    "03636649":"lamp",
+    "03691459":"speaker",
+    "04090263":"rifle",
+    "04256520":"sofa",
+    "04379243":"table",
+    "04401088":"telephone",
+    "04530566":"watercraft",
+
+    "Airplane_Model":"aeroplane",
+    "Car_Model":"car",
+    "Monitor":"display",
+    "Lamp":"lamp",
+    "Telephone":"telephone",
+    "Boat_Model":"watercraft"
+    }
+
+
+def get_batch_mean_features(class_mean_features, feature_map_shape, batch_classes):
+    num_views = feature_map_shape[1]
+    batch_class_mean_features = []
+    for batch_idx, class_id in enumerate(batch_classes):
+        class_name = shapenetID2Name[class_id]
+        y = torch.cat([class_mean_features[class_name] for i in range(num_views)], dim=1)
+        batch_class_mean_features.append(y)
+    batch_class_mean_features = torch.cat(batch_class_mean_features, dim = 0)
+    return batch_class_mean_features
+
+
 def save_checkpoints(cfg, file_path, epoch_idx, encoder, encoder_solver, \
         decoder, decoder_solver, refiner, refiner_solver, merger, merger_solver, \
         classifier, classifier_solver, best_iou, best_epoch):
@@ -58,6 +95,11 @@ def save_checkpoints(cfg, file_path, epoch_idx, encoder, encoder_solver, \
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters())
 
+def models_equal(model1, model2):
+    for p1, p2 in zip(model1.parameters(), model2.parameters()):
+        if p1.data.ne(p2.data).sum() > 0:
+            return False
+    return True
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

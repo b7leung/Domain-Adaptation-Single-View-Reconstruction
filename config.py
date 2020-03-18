@@ -54,7 +54,7 @@ __C.DATASET                                 = edict()
 __C.DATASET.MEAN                            = [0.5, 0.5, 0.5]
 __C.DATASET.STD                             = [0.5, 0.5, 0.5]
 __C.DATASET.TRAIN_DATASET                   = 'ShapeNet'
-__C.DATASET.USE_PLACES                      = True
+__C.DATASET.USE_PLACES                      = False
 
 __C.DATASET.TEST_DATASET                    = 'ShapeNet'
 # __C.DATASET.TEST_DATASET                  = 'Pascal3D'
@@ -84,6 +84,7 @@ __C.DIR                                     = edict()
 __C.DIR.OUT_PATH                            = './output'
 __C.DIR.DATASET_CACHE_PATH                  = './caches/dataset_file_caches'
 __C.DIR.RANDOM_BG_PATH                      = '/home/hzxie/Datasets/SUN2012/JPEGImages'
+__C.DIR.MEAN_FEATURES_PATH                    = './caches/class_mean_shapes.p'
 
 #
 # Network
@@ -94,6 +95,9 @@ __C.NETWORK.TCONV_USE_BIAS                  = False
 __C.NETWORK.USE_REFINER                     = True
 __C.NETWORK.USE_MERGER                      = True # if false, just does an average
 __C.NETWORK.USE_CLASSIFIER                  = False
+__C.NETWORK.MEAN_FEATURES_WEIGHT            = 0
+__C.NETWORK.ADD_MEAN_FEATURES               = 0
+__C.NETWORK.RESIDUAL_LAMBDA = 0
 
 
 #
@@ -135,3 +139,8 @@ __C.TEST                                    = edict()
 __C.TEST.RANDOM_BG_COLOR_RANGE              = [[240, 240], [240, 240], [240, 240]]
 __C.TEST.VOXEL_THRESH                       = [.2, .3, .4, .5]
 __C.TEST.SAVE_NUM                           = 0
+
+
+# perferences
+__C.PREFERENCES= edict()
+__C.PREFERENCES.VERBOSE = False
