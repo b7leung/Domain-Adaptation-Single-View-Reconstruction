@@ -287,4 +287,4 @@ def train_net(cfg, output_dir):
             utils.network_utils.save_checkpoints(
                 cfg, os.path.join(ckpt_dir, 'best-ckpt.pth'),
                 epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
-           
+                refiner, refiner_solver, merger, merger_solver, best_iou, best_epoch)

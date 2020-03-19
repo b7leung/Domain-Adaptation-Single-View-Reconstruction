@@ -54,7 +54,7 @@ def get_args_from_command_line():
     parser.add_argument('--DA', dest='da', help='Type of DA to use, in [coral]', default=None)
 
     # CORAL arguments
-    parser.add_argument('--coral_lam', dest='coral_lam', help='lambda for CORAL loss', default=cfg.TRAIN.DA.CORAL_LAMBDA, type=int)
+    parser.add_argument('--coral_lam', dest='coral_lam', help='lambda for CORAL loss', default=cfg.TRAIN.DA.CORAL_LAMBDA, type=float)
 
     args = parser.parse_args()
     return args
