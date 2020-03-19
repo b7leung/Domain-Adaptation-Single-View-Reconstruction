@@ -4,9 +4,8 @@
 
 
 from datetime import datetime as dt
-from time import time
 import os
-import random
+import sys
 
 from tqdm import tqdm
 import torch
@@ -23,7 +22,8 @@ from models.encoder import Encoder
 from models.decoder import Decoder
 from models.refiner import Refiner
 from models.merger import Merger
-from core.train_noDA import trainer_noDA
+from core.noDA_epoch_manager import NoDA_EpochManager
+from core.CORAL_epoch_manager import CORAL_EpochManager
 
 
 def train_net(cfg, output_dir):
@@ -33,11 +33,7 @@ def train_net(cfg, output_dir):
     # TODO: check this, esp. when doing DA
     torch.backends.cudnn.benchmark = True
 
-    # setting up dataset specific options
-    #if cfg.DATASET.TEST_DATASET == 'ShapeNet':
-    #    num_classes = cfg.DATASETS.SHAPENET.NUM_CLASSES
-
-    # Set up data augmentation
+    # Set up data augmentation, which is different depending on the dataset
     # TODO: check if these make sense, esp for non-shapenet datasets
     IMG_SIZE = cfg.CONST.IMG_H, cfg.CONST.IMG_W
     CROP_SIZE = cfg.CONST.CROP_IMG_H, cfg.CONST.CROP_IMG_W
@@ -167,8 +163,6 @@ def train_net(cfg, output_dir):
         refiner = torch.nn.DataParallel(refiner).cuda()
         merger = torch.nn.DataParallel(merger).cuda()
 
-    # Set up loss functions
-    #bce_loss = torch.nn.BCELoss()  # for voxels
 
     # Load pretrained model if exists
     init_epoch = 0
@@ -198,10 +192,10 @@ def train_net(cfg, output_dir):
     training_record_df = pd.DataFrame()
 
     # setting up trainer depending on the DA config chosen
-    if cfg.TRAIN.DA is "CORAL":
-        trainer = trainer_noDA(cfg, encoder, decoder, merger, refiner, checkpoint)
+    if cfg.TRAIN.DA == "CORAL":
+        epoch_manager = CORAL_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint)
     elif cfg.TRAIN.DA is None:
-        trainer = trainer_noDA(cfg, encoder, decoder, merger, refiner, checkpoint)
+        epoch_manager = NoDA_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint)
     else:
         print('[FATAL] %s Invalid DA.' % (dt.now()))
         sys.exit(2)
@@ -209,91 +203,36 @@ def train_net(cfg, output_dir):
     # Training loop
     for epoch_idx in tqdm(range(init_epoch, cfg.TRAIN.NUM_EPOCHES), desc="Epoch"):
 
-        # Tick / tock
-        #epoch_start_time = time()
-
-        # Batch average meterics
-        #batch_time = utils.network_utils.AverageMeter()
-        #data_time = utils.network_utils.AverageMeter()
-        #encoder_losses = utils.network_utils.AverageMeter()
-        #refiner_losses = utils.network_utils.AverageMeter()
-
-        # initalize everything for the epoch
+        # initalize models for the epoch
         encoder.train()
         decoder.train()
         merger.train()
         refiner.train()
-        trainer.init_epoch()
+        epoch_manager.init_epoch()
 
-        #batch_end_time = time()
-        #n_batches = len(train_data_loader)
+        # going through minibatches for epoch
+        source_iter = iter(train_source_data_loader)
+        if train_target_data_loader is not None:
+            target_iter = iter(train_target_data_loader)
+            n_batches = min(len(train_source_data_loader), len(train_target_data_loader))
+        else:
+            n_batches = len(train_source_data_loader)
 
-        for batch_idx, batch_data in enumerate(tqdm(train_source_data_loader, desc="Minibatch", leave=False)):
-            
-            step_record = trainer.perform_step(batch_data, epoch_idx)
+        #for batch_idx, batch_data in enumerate(tqdm(train_source_data_loader, desc="Minibatch", leave=False)):
+        for batch_idx in tqdm(range(n_batches), desc="Minibatch", leave=False):
 
-            #(taxonomy_id, sample_names, rendering_images,
-            #    ground_truth_volumes, ground_truth_class_labels) = batch_data 
-            
-            # Measure data time
-            #data_time.update(time() - batch_end_time)
+            source_batch_data = next(source_iter)
+            if train_target_data_loader is not None:
+                target_batch_data = next(target_iter)
+            else:
+                target_batch_data = None
 
-            # Get data from data loader
-            #rendering_images = utils.network_utils.var_or_cuda(rendering_images)
-            #ground_truth_volumes = utils.network_utils.var_or_cuda(ground_truth_volumes)
-            #ground_truth_class_labels = utils.network_utils.var_or_cuda(ground_truth_class_labels)
-
-            # Train the encoder, decoder, refiner, merger
-            #image_features = encoder(rendering_images)
-            #raw_features, generated_volumes = decoder(image_features)
-
-            # if the merger is turned off, just compute the mean
-            #if cfg.NETWORK.USE_MERGER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_MERGER:
-            #    generated_volumes = merger(raw_features, generated_volumes)
-            #else:
-            #    generated_volumes = torch.mean(generated_volumes, dim=1)
-            #encoder_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
-
-
-            #if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
-            #    generated_volumes = refiner(generated_volumes)
-            #    refiner_loss = bce_loss(generated_volumes, ground_truth_volumes) * 10
-            #else:
-            #    refiner_loss = encoder_loss
-
-
-            # Gradient decent
-            #encoder.zero_grad()
-            #decoder.zero_grad()
-            #refiner.zero_grad()
-            #merger.zero_grad()
-
-            #if cfg.NETWORK.USE_REFINER and epoch_idx >= cfg.TRAIN.EPOCH_START_USE_REFINER:
-            #    encoder_loss.backward(retain_graph=True)
-            #    refiner_loss.backward()
-            #else:
-            #    encoder_loss.backward()
+            step_record = epoch_manager.perform_step(source_batch_data, target_batch_data, epoch_idx)
 
             encoder_solver.step()
             decoder_solver.step()
             refiner_solver.step()
             merger_solver.step()
-
-            # Append loss to average metrics
-            #encoder_losses.update(encoder_loss.item())
-            #refiner_losses.update(refiner_loss.item())
-
-            # Tick / tock
-            #batch_time.update(time() - batch_end_time)
-            #batch_end_time = time()
-            #if cfg.PREFERENCES.VERBOSE:
-                #print('[INFO] %s [Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) EDLoss=%.4f RLoss=%.4f' %
-                      #(dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, batch_idx + 1, n_batches,
-                       #batch_time.val, data_time.val, encoder_loss.item(), refiner_loss.item()))
-                
-                #print(epoch_info)
-
-            #training_record_df = training_record_df.append({"Epoch": epoch_idx, "Minibatch": batch_idx, "IoU": -1}, ignore_index=True)
 
             step_record["Epoch"] = epoch_idx
             step_record["Minibatch"] = batch_idx
@@ -301,23 +240,14 @@ def train_net(cfg, output_dir):
                 print(step_record)
             training_record_df = training_record_df.append(step_record, ignore_index=True)
 
-
-
         # Adjust learning rate
         encoder_lr_scheduler.step()
         decoder_lr_scheduler.step()
         refiner_lr_scheduler.step()
         merger_lr_scheduler.step()
-        trainer.end_epoch()
+        epoch_manager.end_epoch()
 
-        # Tick / tock
-        #epoch_end_time = time()
-        #print('[INFO] %s Epoch [%d/%d] EpochTime = %.3f (s) EDLoss = %.4f RLoss = %.4f' %
-        #      (dt.now(), epoch_idx + 1, cfg.TRAIN.NUM_EPOCHES, epoch_end_time - epoch_start_time, 
-        #       encoder_losses.avg, refiner_losses.avg))
-
-
-        #TODO: look at this closer
+        #TODO: look at this closer for multiview
         # Update Rendering Views
         #if cfg.TRAIN.UPDATE_N_VIEWS_RENDERING:
         #    n_views_rendering = random.randint(1, cfg.CONST.N_VIEWS_RENDERING)
@@ -334,7 +264,6 @@ def train_net(cfg, output_dir):
 
         # saving training record
         training_record_df.to_pickle(os.path.join(output_dir, "training_record.pkl"))
-        #print(pd.read_pickle(os.path.join(output_dir, "training_record.pkl")))
 
         # Save weights to file
         if (epoch_idx + 1) % cfg.TRAIN.SAVE_FREQ == 0:
@@ -355,7 +284,3 @@ def train_net(cfg, output_dir):
                 cfg, os.path.join(ckpt_dir, 'best-ckpt.pth'),
                 epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
                 refiner, refiner_solver, merger, merger_solver, best_iou, best_epoch)
-
-
-    # returning and saving assets/useful data to be used for later visualization
-    return

@@ -3,14 +3,14 @@ import torch
 
 import utils.network_utils
 
-class trainer_noDA():
+
+class NoDA_EpochManager():
 
     # train target data loader should be None; it's ignored
     def __init__(self, cfg, encoder, decoder, merger, refiner,
                  checkpoint):
         
         # set up trainer specific models (to cuda), solvers, and schedulers
-
         # loading specific pretrained model if it exists
         # if chekcpoint is not None:
         # .apply()
@@ -23,21 +23,24 @@ class trainer_noDA():
         self.refiner = refiner
         self.cfg = cfg
 
+
     # meant to be called before each epoch
     def init_epoch(self):
+
         # Batch average meterics
         #batch_time = utils.network_utils.AverageMeter()
         #data_time = utils.network_utils.AverageMeter()
         self.encoder_losses = utils.network_utils.AverageMeter()
         self.refiner_losses = utils.network_utils.AverageMeter()
-
         # xxx.train() for specific
 
+
     # returns a record for the step; a dict meant to be a row in a pandas df
-    def perform_step(self, batch_data, epoch_idx):
+    # since no DA, target batch data is ignored
+    def perform_step(self, source_batch_data, target_batch_data, epoch_idx):
 
         (taxonomy_id, sample_names, rendering_images,
-            ground_truth_volumes, ground_truth_class_labels) = batch_data 
+            ground_truth_volumes, ground_truth_class_labels) = source_batch_data 
         
         # Get data from data loader
         rendering_images = utils.network_utils.var_or_cuda(rendering_images)
@@ -81,6 +84,7 @@ class trainer_noDA():
         step_record = {"EDLoss": encoder_loss.item(), "RLoss": refiner_loss.item()}
 
         return step_record
+
 
     def end_epoch(self):
         # architecture specific scheduler.step()
