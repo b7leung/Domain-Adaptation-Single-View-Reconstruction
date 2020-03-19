@@ -53,6 +53,15 @@ shapenetID2Name = {
     "Boat_Model": "watercraft"
 }
 
+shapenet2oowl_name = {
+    "aeroplane": "Airplane_Model",
+    "car": "Car_Model",
+    "display": "Monitor",
+    "lamp": "Lamp",
+    "telephone": "Telephone",
+    "watercraft": "Boat_Model"
+}
+
 
 def get_batch_mean_features(class_mean_features, feature_map_shape, batch_classes):
     num_views = feature_map_shape[1]

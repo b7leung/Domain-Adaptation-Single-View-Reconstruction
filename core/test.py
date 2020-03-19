@@ -10,6 +10,7 @@ import torch.backends.cudnn
 import torch.utils.data
 import cv2
 from tqdm import tqdm
+import pprint
 
 import utils.binvox_visualization
 import utils.data_loaders
@@ -227,6 +228,8 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
     latent_vectors = np.array(latent_vectors)
 
     # Shape based results are only possible if we have GT volume
+    #pprint.pprint(test_iou)
+
     max_iou = 0
     if has_gt_volume:
         mean_iou = []

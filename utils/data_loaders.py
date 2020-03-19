@@ -13,6 +13,7 @@ import sys
 import torch.utils.data.dataset
 from tqdm import tqdm
 import pickle
+import pprint
 
 from datetime import datetime as dt
 from enum import Enum, unique
@@ -512,7 +513,6 @@ class ODDSDataLoader:
                     samples = taxonomy['val']
 
                 files.extend(self.get_files_of_taxonomy(taxonomy_folder_name, samples))
-
         print('[INFO] %s Complete collecting files of the dataset. Total files: %d.' % (dt.now(), len(files)))
         return ODDSDataset(dataset_type, files, n_views_rendering, transforms)
 

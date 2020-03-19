@@ -35,53 +35,50 @@ def train_net(cfg, output_dir):
 
     # Set up data augmentation, which is different depending on the dataset
     # TODO: check if these make sense, esp for non-shapenet datasets
+    # TODO: Add back in places case and funcionality. rn, DATASET.USE_PLACES must be false
     IMG_SIZE = cfg.CONST.IMG_H, cfg.CONST.IMG_W
     CROP_SIZE = cfg.CONST.CROP_IMG_H, cfg.CONST.CROP_IMG_W
-    if cfg.DATASET.USE_PLACES:
-        train_transforms = utils.data_transforms.Compose([
-            utils.data_transforms.RandomCrop(IMG_SIZE, CROP_SIZE),
-            #utils.data_transforms.RandomBackground(cfg.TRAIN.RANDOM_BG_COLOR_RANGE),
-            utils.data_transforms.ColorJitter(cfg.TRAIN.BRIGHTNESS, cfg.TRAIN.CONTRAST, cfg.TRAIN.SATURATION),
-            utils.data_transforms.RandomNoise(cfg.TRAIN.NOISE_STD),
-            utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
-            utils.data_transforms.RandomFlip(),
-            utils.data_transforms.RandomPermuteRGB(),
-            utils.data_transforms.ToTensor(),
-        ])
-        val_transforms = utils.data_transforms.Compose([
+ 
+    # this is always  shapenet
+    train_source_transforms = utils.data_transforms.Compose([
+        utils.data_transforms.RandomCrop(IMG_SIZE, CROP_SIZE),
+        utils.data_transforms.RandomBackground(cfg.TRAIN.RANDOM_BG_COLOR_RANGE),
+        utils.data_transforms.ColorJitter(cfg.TRAIN.BRIGHTNESS, cfg.TRAIN.CONTRAST, cfg.TRAIN.SATURATION),
+        utils.data_transforms.RandomNoise(cfg.TRAIN.NOISE_STD),
+        utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
+        utils.data_transforms.RandomFlip(),
+        utils.data_transforms.RandomPermuteRGB(),
+        utils.data_transforms.ToTensor(),
+    ])
+    
+    if cfg.DATASET.TRAIN_TARGET_DATASET in ["OOWL", "OWILD"]:
+        train_target_transforms = utils.data_transforms.Compose([
             utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
-            #utils.data_transforms.RandomBackground(cfg.TEST.RANDOM_BG_COLOR_RANGE),
             utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
             utils.data_transforms.ToTensor(),
         ])
-    else:
-        train_transforms = utils.data_transforms.Compose([
-            utils.data_transforms.RandomCrop(IMG_SIZE, CROP_SIZE),
-            utils.data_transforms.RandomBackground(cfg.TRAIN.RANDOM_BG_COLOR_RANGE),
-            utils.data_transforms.ColorJitter(cfg.TRAIN.BRIGHTNESS, cfg.TRAIN.CONTRAST, cfg.TRAIN.SATURATION),
-            utils.data_transforms.RandomNoise(cfg.TRAIN.NOISE_STD),
-            utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
-            utils.data_transforms.RandomFlip(),
-            utils.data_transforms.RandomPermuteRGB(),
-            utils.data_transforms.ToTensor(),
-        ])
-        val_transforms = utils.data_transforms.Compose([
-            utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
-            utils.data_transforms.RandomBackground(cfg.TEST.RANDOM_BG_COLOR_RANGE),
-            utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
-            utils.data_transforms.ToTensor(),
-        ])
+        target_classes_to_use = [utils.network_utils.shapenet2oowl_name[shapenet_class] for shapenet_class in cfg.DATASET.CLASSES_TO_USE]
+
+    # this is always shapenet
+    val_transforms = utils.data_transforms.Compose([
+        utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
+        utils.data_transforms.RandomBackground(cfg.TEST.RANDOM_BG_COLOR_RANGE),
+        utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
+        utils.data_transforms.ToTensor(),
+    ])
 
     # Set up data loader
     if cfg.DATASET.TRAIN_TARGET_DATASET is None:
         eff_batch_size = cfg.CONST.BATCH_SIZE
         train_target_data_loader = None
     else:
-        eff_batch_size = cfg.CONST.BATCH_SIZE / 2
+        eff_batch_size = int(cfg.CONST.BATCH_SIZE / 2)
         train_target_dataset_loader = utils.data_loaders.DATASET_LOADER_MAPPING[cfg.DATASET.TRAIN_TARGET_DATASET](cfg)
         train_target_data_loader = torch.utils.data.DataLoader(
             dataset=train_target_dataset_loader.get_dataset(utils.data_loaders.DatasetType.TRAIN,
-                                                            cfg.CONST.N_VIEWS_RENDERING, train_transforms, classes_filter=cfg.DATASET.CLASSES_TO_USE),
+                                                            cfg.CONST.N_VIEWS_RENDERING, train_target_transforms,
+                                                            classes_filter=target_classes_to_use),
+                                                            # classes_filter=cfg.DATASET.CLASSES_TO_USE),
             batch_size=eff_batch_size,
             num_workers=cfg.TRAIN.NUM_WORKER,
             pin_memory=True,
@@ -89,18 +86,21 @@ def train_net(cfg, output_dir):
             drop_last=True)
 
     train_source_dataset_loader = utils.data_loaders.DATASET_LOADER_MAPPING[cfg.DATASET.TRAIN_SOURCE_DATASET](cfg)
-    val_dataset_loader = utils.data_loaders.DATASET_LOADER_MAPPING[cfg.DATASET.TEST_DATASET](cfg)
     train_source_data_loader = torch.utils.data.DataLoader(
         dataset=train_source_dataset_loader.get_dataset(utils.data_loaders.DatasetType.TRAIN,
-                                                        cfg.CONST.N_VIEWS_RENDERING, train_transforms, classes_filter=cfg.DATASET.CLASSES_TO_USE),
+                                                        cfg.CONST.N_VIEWS_RENDERING, train_source_transforms,
+                                                        classes_filter=cfg.DATASET.CLASSES_TO_USE),
         batch_size=eff_batch_size,
         num_workers=cfg.TRAIN.NUM_WORKER,
         pin_memory=True,
         shuffle=True,
         drop_last=True)
+
+    val_dataset_loader = utils.data_loaders.DATASET_LOADER_MAPPING[cfg.DATASET.TEST_DATASET](cfg)
     val_data_loader = torch.utils.data.DataLoader(
         dataset=val_dataset_loader.get_dataset(utils.data_loaders.DatasetType.VAL,
-                                               cfg.CONST.N_VIEWS_RENDERING, val_transforms, classes_filter=cfg.DATASET.CLASSES_TO_USE),
+                                               cfg.CONST.N_VIEWS_RENDERING, val_transforms,
+                                               classes_filter=cfg.DATASET.CLASSES_TO_USE),
         batch_size=1,
         num_workers=1,
         pin_memory=True,
@@ -192,9 +192,9 @@ def train_net(cfg, output_dir):
     training_record_df = pd.DataFrame()
 
     # setting up trainer depending on the DA config chosen
-    if cfg.TRAIN.DA == "CORAL":
+    if cfg.TRAIN.USE_DA == "CORAL":
         epoch_manager = CORAL_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint)
-    elif cfg.TRAIN.DA is None:
+    elif cfg.TRAIN.USE_DA is None:
         epoch_manager = NoDA_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint)
     else:
         print('[FATAL] %s Invalid DA.' % (dt.now()))
@@ -211,19 +211,22 @@ def train_net(cfg, output_dir):
         epoch_manager.init_epoch()
 
         # going through minibatches for epoch
+        # each epoch corresponds to the length of the source dataset
         source_iter = iter(train_source_data_loader)
         if train_target_data_loader is not None:
             target_iter = iter(train_target_data_loader)
-            n_batches = min(len(train_source_data_loader), len(train_target_data_loader))
-        else:
-            n_batches = len(train_source_data_loader)
+        n_batches = len(train_source_data_loader)
 
-        #for batch_idx, batch_data in enumerate(tqdm(train_source_data_loader, desc="Minibatch", leave=False)):
         for batch_idx in tqdm(range(n_batches), desc="Minibatch", leave=False):
 
             source_batch_data = next(source_iter)
             if train_target_data_loader is not None:
-                target_batch_data = next(target_iter)
+                # since the target is assumed to be smaller, we enable infinite looping thorugh iter.
+                try:
+                    target_batch_data = next(target_iter)
+                except StopIteration:
+                    target_iter = iter(train_target_data_loader)
+                    target_batch_data = next(target_iter)
             else:
                 target_batch_data = None
 
@@ -256,6 +259,7 @@ def train_net(cfg, output_dir):
         #          (dt.now(), epoch_idx + 2, cfg.TRAIN.NUM_EPOCHES, n_views_rendering))
 
         # Validate the training models
+        # TODO: also show iou for other thresholds, now it's only the mean
         iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, encoder, decoder, refiner, merger)[0]
 
         epoch_record = {"Epoch": epoch_idx, "Minibatch": -1, "IoU": iou}
@@ -283,4 +287,4 @@ def train_net(cfg, output_dir):
             utils.network_utils.save_checkpoints(
                 cfg, os.path.join(ckpt_dir, 'best-ckpt.pth'),
                 epoch_idx + 1, encoder, encoder_solver, decoder, decoder_solver,
-                refiner, refiner_solver, merger, merger_solver, best_iou, best_epoch)
+           

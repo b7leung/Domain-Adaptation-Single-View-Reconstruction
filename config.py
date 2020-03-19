@@ -12,7 +12,8 @@ cfg                                         = __C
 #
 dataset_folder = '/data7/brandon/research/datasets/'
 __C.DATASETS                                = edict()
-__C.DATASETS.TRAIN_AVAILABLE                = ["ShapeNet"]
+__C.DATASETS.SOURCE_TRAIN_AVAILABLE                = ["ShapeNet"]
+__C.DATASETS.TARGET_TRAIN_AVAILABLE                = ["ShapeNet", "OWILD", "OOWL", "OOWL_SEGMENTED"]
 __C.DATASETS.TEST_AVAILABLE                 = ["ShapeNet", "OWILD", "OOWL", "OOWL_SEGMENTED"]
 __C.DATASETS.REBUILD_CACHE                  = False
 
@@ -126,7 +127,10 @@ __C.TRAIN.MOMENTUM                          = .9
 __C.TRAIN.GAMMA                             = .5
 __C.TRAIN.SAVE_FREQ                         = 10            # weights will be overwritten every save_freq epoch
 __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
-__C.TRAIN.DA = None
+__C.TRAIN.USE_DA = None
+
+__C.TRAIN.DA = edict()
+__C.TRAIN.DA.CORAL_LAMBDA = 0
 
 #
 # Testing options
