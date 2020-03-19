@@ -37,7 +37,8 @@ def get_args_from_command_line():
     parser.add_argument('--verbose', dest='verbose', help='print verbose', action='store_true', default=cfg.PREFERENCES.VERBOSE)
     
     parser.add_argument('--test_dataset', dest='test_dataset', help='What dataset to test on.', default="ShapeNet", type=str)
-    parser.add_argument('--train_dataset', dest='train_dataset', help='What dataset to train on.', default="ShapeNet", type=str)
+    parser.add_argument('--train_source_dataset', dest='train_source_dataset', help='Source dataset to train on.', default="ShapeNet", type=str)
+    parser.add_argument('--train_target_dataset', dest='train_target_dataset', help='Target dataset to train on. If omitted, no DA is performed', default=None, type=str)
     parser.add_argument('--test', dest='test', help='Test neural networks', action='store_true')
     parser.add_argument('--batch-size', dest='batch_size', help='name of the net', default=cfg.CONST.BATCH_SIZE, type=int)
     parser.add_argument('--epoch', dest='epoch', help='num. of epoches. Only has effect for training', default=cfg.TRAIN.NUM_EPOCHES, type=int)
@@ -47,6 +48,8 @@ def get_args_from_command_line():
 
     parser.add_argument('--no_refiner', dest='no_refiner', help='turn off refiner', action='store_true', default=False)
     parser.add_argument('--no_merger', dest='no_merger', help='turn off merger', action='store_true', default=False)
+
+    parser.add_argument('--DA', dest='da', help='Type of DA to use, in [coral]', default=None)
 
     args = parser.parse_args()
     return args
@@ -71,21 +74,31 @@ def main():
     cfg.CONST.N_VIEWS_RENDERING = args.num_views
     cfg.TEST.SAVE_NUM = args.save_num
     cfg.DATASET.CLASSES_TO_USE = args.classes_to_use
+
     if args.test_dataset in cfg.DATASETS.TEST_AVAILABLE:
         cfg.DATASET.TEST_DATASET = args.test_dataset
     else:
         print('[FATAL] %s Invalid test dataset.' % (dt.now()))
         sys.exit(2)
-    if args.train_dataset in cfg.DATASETS.TRAIN_AVAILABLE:
-        cfg.DATASET.TRAIN_DATASET = args.train_dataset
+        
+    if args.train_source_dataset in cfg.DATASETS.TRAIN_AVAILABLE:
+        cfg.DATASET.TRAIN_SOURCE_DATASET = args.train_source_dataset
     else:
-        print('[FATAL] %s Invalid train dataset.' % (dt.now()))
+        print('[FATAL] %s Invalid train source dataset.' % (dt.now()))
         sys.exit(2)
+
+    if args.train_target_dataset is None or args.train_target_dataset in cfg.DATASETS.TRAIN_AVAILABLE:
+        cfg.DATASET.TRAIN_TARGET_DATASET = args.train_target_dataset
+    else:
+        print('[FATAL] %s Invalid train target dataset.' % (dt.now()))
+        sys.exit(2)
+
     cfg.PREFERENCES.VERBOSE = args.verbose
     if args.no_refiner:
         cfg.NETWORK.USE_REFINER = False
     if args.no_merger:
         cfg.NETWORK.USE_MERGER = False
+    cfg.TRAIN.DA = args.da
     # Set GPU to use
     if type(cfg.CONST.DEVICE) == str:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE

@@ -54,7 +54,8 @@ __C.DATASETS.OOWL_SEGMENTED.RENDERING_PATH           = dataset_folder + "3D_ODDS
 __C.DATASET                                 = edict()
 __C.DATASET.MEAN                            = [0.5, 0.5, 0.5]
 __C.DATASET.STD                             = [0.5, 0.5, 0.5]
-__C.DATASET.TRAIN_DATASET                   = 'ShapeNet'
+__C.DATASET.TRAIN_SOURCE_DATASET                   = 'ShapeNet'
+__C.DATASET.TRAIN_TARGET_DATASET                   = None
 __C.DATASET.USE_PLACES                      = False
 
 __C.DATASET.TEST_DATASET                    = 'ShapeNet'
@@ -125,6 +126,7 @@ __C.TRAIN.MOMENTUM                          = .9
 __C.TRAIN.GAMMA                             = .5
 __C.TRAIN.SAVE_FREQ                         = 10            # weights will be overwritten every save_freq epoch
 __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
+__C.TRAIN.DA = None
 
 #
 # Testing options
