@@ -21,11 +21,11 @@ matplotlib.use('Agg')
 from argparse import ArgumentParser
 from datetime import datetime as dt
 from pprint import pprint
-from tensorboardX import SummaryWriter
 
 from config import cfg
 from core.train import train_net
 from core.test import test_net
+
 
 def get_args_from_command_line():
     parser = ArgumentParser(description='Parser of Runner of Pix2Vox')
@@ -41,14 +41,10 @@ def get_args_from_command_line():
     parser.add_argument('--test', dest='test', help='Test neural networks', action='store_true')
     parser.add_argument('--batch-size', dest='batch_size', help='name of the net', default=cfg.CONST.BATCH_SIZE, type=int)
     parser.add_argument('--epoch', dest='epoch', help='num. of epoches. Only has effect for training', default=cfg.TRAIN.NUM_EPOCHES, type=int)
-    parser.add_argument('--save_num', dest='save_num', help='Save n samples per class. If -1, save all.', default=cfg.TEST.SAVE_NUM, type=int)
-
-    parser.add_argument('--classes', dest = "classes_to_use", nargs='+', help='Classes to use', default = None)
+    parser.add_argument('--save_num', dest='save_num', help='Save n samples per class during testing. If -1, save all.', default=cfg.TEST.SAVE_NUM, type=int)
+    parser.add_argument('--classes', dest="classes_to_use", nargs='+', help='Classes to use', default=None)
     parser.add_argument('--num_views', dest='num_views', help='number of views to use', default=cfg.CONST.N_VIEWS_RENDERING, type=int)
-    parser.add_argument('--classify', dest='classify', help='also perform classification', action='store_true', default=cfg.NETWORK.USE_CLASSIFIER)
-    parser.add_argument('--mean_features_weight', dest='mean_features_weight', help='Set mean feature weight', default=cfg.NETWORK.MEAN_FEATURES_WEIGHT, type = float)
-    parser.add_argument('--add_mean_features', dest='add_mean_features', help='add mean features instead of weighted average', action='store_true', default=cfg.NETWORK.ADD_MEAN_FEATURES)
-    parser.add_argument('--residual_lambda', dest='residual_lambda', help='if add mean features, determines weight of l2 for residual',  default=cfg.NETWORK.RESIDUAL_LAMBDA, type = float)
+
     parser.add_argument('--no_refiner', dest='no_refiner', help='turn off refiner', action='store_true', default=False)
     parser.add_argument('--no_merger', dest='no_merger', help='turn off merger', action='store_true', default=False)
 
@@ -74,7 +70,6 @@ def main():
             cfg.TRAIN.RESUME_TRAIN = True
     cfg.CONST.N_VIEWS_RENDERING = args.num_views
     cfg.TEST.SAVE_NUM = args.save_num
-    cfg.NETWORK.USE_CLASSIFIER = args.classify
     cfg.DATASET.CLASSES_TO_USE = args.classes_to_use
     if args.test_dataset in cfg.DATASETS.TEST_AVAILABLE:
         cfg.DATASET.TEST_DATASET = args.test_dataset
@@ -86,40 +81,32 @@ def main():
     else:
         print('[FATAL] %s Invalid train dataset.' % (dt.now()))
         sys.exit(2)
-    cfg.NETWORK.MEAN_FEATURES_WEIGHT = args.mean_features_weight
-    cfg.NETWORK.ADD_MEAN_FEATURES = args.add_mean_features
     cfg.PREFERENCES.VERBOSE = args.verbose
-    cfg.NETWORK.RESIDUAL_LAMBDA = args.residual_lambda
     if args.no_refiner:
         cfg.NETWORK.USE_REFINER = False
     if args.no_merger:
-        cfg.NETWORK.USE_MERGER= False
-
-
+        cfg.NETWORK.USE_MERGER = False
     # Set GPU to use
     if type(cfg.CONST.DEVICE) == str:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE
 
-
     # creating output folder for this trial run
     mode = "TEST" if args.test else "TRAIN"
-    trial_name = time.strftime("%Y_%m_%d--%H_%M_%S") +"_"+ args.trial_comment+"_"+mode
+    trial_name = time.strftime("%Y_%m_%d--%H_%M_%S")  + "_" + args.trial_comment + "_" + mode
     output_dir = os.path.join(cfg.DIR.OUT_PATH, trial_name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-        with open(os.path.join(output_dir,"run_cfg_info.txt"), 'wt') as f:
+        with open(os.path.join(output_dir, "run_cfg_info.txt"), 'wt') as f:
             pprint(args, stream=f)
             f.write("\n\n")
-            pprint(cfg,stream=f)
-
+            pprint(cfg, stream=f)
 
     # Start train/test process
     if not args.test:
-        train_net(cfg, output_dir = output_dir)
+        train_net(cfg, output_dir=output_dir)
     else:
         if 'WEIGHTS' in cfg.CONST and os.path.exists(cfg.CONST.WEIGHTS):
-            #writer = SummaryWriter(os.path.join("runs",trial_name))
-            test_net(cfg, output_dir = output_dir)
+            test_net(cfg, output_dir=output_dir)
         else:
             print('[FATAL] %s Please specify the file path of checkpoint.' % (dt.now()))
             sys.exit(2)

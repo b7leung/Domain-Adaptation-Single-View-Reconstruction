@@ -39,19 +39,19 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
         self.transforms = transforms
         self.n_views_rendering = n_views_rendering
         self.shapenet_cls_mapping = {
-            "02691156":0,
-            "02828884":1,
-            "02933112":2,
-            "02958343":3,
-            "03001627":4,
-            "03211117":5,
-            "03636649":6,
-            "03691459":7,
-            "04090263":8,
-            "04256520":9,
-            "04379243":10,
-            "04401088":11,
-            "04530566":12
+            "02691156": 0,
+            "02828884": 1,
+            "02933112": 2,
+            "02958343": 3,
+            "03001627": 4,
+            "03211117": 5,
+            "03636649": 6,
+            "03691459": 7,
+            "04090263": 8,
+            "04256520": 9,
+            "04379243": 10,
+            "04401088": 11,
+            "04530566": 12
         }
 
     def __len__(self):
@@ -128,8 +128,12 @@ class ShapeNetDataLoader:
         # Load all taxonomies of the dataset
         with open(cfg.DATASETS.SHAPENET.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
             self.dataset_taxonomy = json.loads(file.read())
+        
+        self.rebuild_cache = cfg.DATASETS.REBUILD_CACHE
 
-    def get_dataset(self, dataset_type, n_views_rendering, transforms=None, classes_filter=None, rebuild_cache=False):
+
+    def get_dataset(self, dataset_type, n_views_rendering, 
+                    transforms=None, classes_filter=None):
         files = []
 
         # Load data for each category
@@ -147,17 +151,17 @@ class ShapeNetDataLoader:
 
                 cache_loc = os.path.join(self.dataset_cache_path, self.cache_folder_name, "{}_{}.p".format(taxonomy_folder_name, partition_name))
 
-                if rebuild_cache or not os.path.exists(cache_loc):
-                    print('[INFO] %s Rebuilding Cache -- Collecting files of Taxonomy[ID=%s, Name=%s, Partition=%s]' % (dt.now(), taxonomy['taxonomy_id'],
-                                                                                    taxonomy['taxonomy_name'], partition_name))
+                if self.rebuild_cache or not os.path.exists(cache_loc):
+                    print('[INFO] %s Rebuilding Cache -- Collecting files of Taxonomy[ID=%s, Name=%s, Partition=%s]' % 
+                          (dt.now(), taxonomy['taxonomy_id'], taxonomy['taxonomy_name'], partition_name))
                     
                     samples = taxonomy[partition_name]
                     files_of_taxonomy = self.get_files_of_taxonomy(taxonomy_folder_name, samples)
                     pickle.dump(files_of_taxonomy, open(cache_loc, 'wb'))
                 
                 else:
-                    print('[INFO] %s Loading cache of Taxonomy[ID=%s, Name=%s, Partition=%s]' % (dt.now(), taxonomy['taxonomy_id'],
-                                                                                   taxonomy['taxonomy_name'], partition_name))
+                    print('[INFO] %s Loading cache of Taxonomy[ID=%s, Name=%s, Partition=%s]' %
+                          (dt.now(), taxonomy['taxonomy_id'], taxonomy['taxonomy_name'], partition_name))
                     files_of_taxonomy = pickle.load(open(cache_loc, 'rb'))
                 
                 files.extend(files_of_taxonomy)
@@ -167,7 +171,6 @@ class ShapeNetDataLoader:
 
     def get_files_of_taxonomy(self, taxonomy_folder_name, samples):
         files_of_taxonomy = []
-        n_samples = len(samples)
 
         for sample_idx, sample_name in enumerate(tqdm(samples)):
             # Get file path of volumes
@@ -290,7 +293,6 @@ class Pascal3dDataLoader:
 
     def get_files_of_taxonomy(self, taxonomy_name, samples):
         files_of_taxonomy = []
-        n_samples = len(samples)
 
         for sample_idx, sample_name in enumerate(samples):
             # Get file list of rendering images
@@ -438,7 +440,6 @@ class Pix3dDataLoader:
 
     def get_files_of_taxonomy(self, taxonomy_name, samples):
         files_of_taxonomy = []
-        n_samples = len(samples)
 
         for sample_idx, sample_name in enumerate(samples):
             # Get image annotations
@@ -457,7 +458,7 @@ class Pix3dDataLoader:
                 annotations['bbox'][1] / img_height,
                 annotations['bbox'][2] / img_width,
                 annotations['bbox'][3] / img_height
-            ] # yapf: disable
+            ]  # yapf: disable
             model_name_parts = annotations['voxel'].split('/')
             model_name = model_name_parts[2]
             volume_file_name = model_name_parts[3][:-4].replace('voxel', 'model')
@@ -500,8 +501,8 @@ class ODDSDataLoader:
             if classes_filter is None or taxonomy['taxonomy_name'] in classes_filter:
 
                 taxonomy_folder_name = taxonomy['taxonomy_id']
-                print('[INFO] %s Collecting files of Taxonomy[ID=%s, Name=%s]' % (dt.now(), taxonomy['taxonomy_id'],
-                                                                                taxonomy['taxonomy_name']))
+                print('[INFO] %s Collecting files of Taxonomy[ID=%s, Name=%s]' % 
+                      (dt.now(), taxonomy['taxonomy_id'], taxonomy['taxonomy_name']))
                 samples = []
                 if dataset_type == DatasetType.TRAIN:
                     samples = taxonomy['train']
@@ -538,11 +539,13 @@ class ODDSDataLoader:
 
         return files_of_taxonomy
 
+
 class OWILDDataLoader(ODDSDataLoader):
     def __init__(self, cfg):
         self.rendering_image_path_template = cfg.DATASETS.OWILD.RENDERING_PATH
         with open(cfg.DATASETS.OWILD.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
             self.dataset_taxonomy = json.loads(file.read())
+
 
 class OOWLDataLoader(ODDSDataLoader):
     def __init__(self, cfg):
@@ -550,11 +553,13 @@ class OOWLDataLoader(ODDSDataLoader):
         with open(cfg.DATASETS.OOWL.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
             self.dataset_taxonomy = json.loads(file.read())
 
+
 class OOWL_SegmentedDataLoader(ODDSDataLoader):
     def __init__(self, cfg):
         self.rendering_image_path_template = cfg.DATASETS.OOWL_SEGMENTED.RENDERING_PATH
         with open(cfg.DATASETS.OOWL_SEGMENTED.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
             self.dataset_taxonomy = json.loads(file.read())
+
 
 class ODDSDataset(torch.utils.data.dataset.Dataset):
     """3D odds class used for PyTorch DataLoader. Since there are no volumes, it's retruned as 0"""
@@ -567,11 +572,11 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
         # TODO: Adapt to work with all classes, not just 6 overlapping
         self.ODDS_class_mapping = {
             "Airplane_Model": 0,
-            "Car_Model":3,
-            "Monitor":5,
-            "Lamp":6,
-            "Telephone":11,
-            "Boat_Model":12
+            "Car_Model": 3,
+            "Monitor": 5,
+            "Lamp": 6,
+            "Telephone": 11,
+            "Boat_Model": 12
         }
 
     def __len__(self):
@@ -619,6 +624,7 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
 
 # /////////////////////////////// = End of 3D-ODDS Class Definition = /////////////////////////////// #
 
+
 DATASET_LOADER_MAPPING = {
     'ShapeNet': ShapeNetDataLoader,
     'Pascal3D': Pascal3dDataLoader,
@@ -626,4 +632,4 @@ DATASET_LOADER_MAPPING = {
     'OWILD': OWILDDataLoader,
     'OOWL': OOWLDataLoader,
     'OOWL_SEGMENTED': OOWL_SegmentedDataLoader,
-} # yapf: disable
+}  # yapf: disable
