@@ -109,6 +109,16 @@ def models_equal(model1, model2):
     return True
 
 
+# record entry is a dict
+def record2str(record_entry):
+    
+    s = "Epoch: {} Minibatch: {} ///// ".format(record_entry["Epoch"], record_entry["Minibatch"])
+    for key in record_entry:
+        if key not in ["Epoch", "Minibatch"]:
+            s = s + "{}: {:.3f} ".format(key, record_entry[key])
+    return s
+
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
 

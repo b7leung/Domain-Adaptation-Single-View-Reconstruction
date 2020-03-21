@@ -24,6 +24,8 @@ from models.refiner import Refiner
 from models.merger import Merger
 from core.noDA_epoch_manager import NoDA_EpochManager
 from core.CORAL_epoch_manager import CORAL_EpochManager
+from core.DANN_epoch_manager import DANN_EpochManager
+from core.voxel_cls_epoch_manager import VoxelClassify_EpochManager
 
 
 def train_net(cfg, output_dir):
@@ -78,7 +80,6 @@ def train_net(cfg, output_dir):
             dataset=train_target_dataset_loader.get_dataset(utils.data_loaders.DatasetType.TRAIN,
                                                             cfg.CONST.N_VIEWS_RENDERING, train_target_transforms,
                                                             classes_filter=target_classes_to_use),
-                                                            # classes_filter=cfg.DATASET.CLASSES_TO_USE),
             batch_size=eff_batch_size,
             num_workers=cfg.TRAIN.NUM_WORKER,
             pin_memory=True,
@@ -105,6 +106,7 @@ def train_net(cfg, output_dir):
         num_workers=1,
         pin_memory=True,
         shuffle=False)
+
 
     # Set up networks
     encoder = Encoder(cfg)
@@ -194,6 +196,10 @@ def train_net(cfg, output_dir):
     # setting up trainer depending on the DA config chosen
     if cfg.TRAIN.USE_DA == "CORAL":
         epoch_manager = CORAL_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint)
+    elif cfg.TRAIN.USE_DA == "DANN":
+        epoch_manager = DANN_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint)
+    elif cfg.TRAIN.USE_DA == "VoxelCls":
+        epoch_manager = VoxelClassify_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint, cfg.TRAIN.NUM_EPOCHES)
     elif cfg.TRAIN.USE_DA is None:
         epoch_manager = NoDA_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint)
     else:
@@ -240,7 +246,7 @@ def train_net(cfg, output_dir):
             step_record["Epoch"] = epoch_idx
             step_record["Minibatch"] = batch_idx
             if cfg.PREFERENCES.VERBOSE:
-                print(step_record)
+                tqdm.write(utils.network_utils.record2str(step_record))
             training_record_df = training_record_df.append(step_record, ignore_index=True)
 
         # Adjust learning rate

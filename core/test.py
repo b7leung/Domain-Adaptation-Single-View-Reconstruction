@@ -59,6 +59,7 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
             utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
             utils.data_transforms.ToTensor(),
         ])
+        cfg.DATASET.CLASSES_TO_USE = [utils.network_utils.shapenet2oowl_name[shapenet_class] for shapenet_class in cfg.DATASET.CLASSES_TO_USE]
     elif cfg.DATASET.TEST_DATASET == "OOWL_SEGMENTED":
         has_gt_volume = False
         test_transforms = utils.data_transforms.Compose([
@@ -187,17 +188,17 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
                 test_iou[taxonomy_id]['iou'].append(sample_iou)
 
                 # Print sample loss and IoU
-                if cfg.PREFERENCES.VERBOSE:
-                    print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s' %
-                          (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, encoder_loss.item(),
-                           refiner_loss.item(), ['%.4f' % si for si in sample_iou]))
+                #if cfg.PREFERENCES.VERBOSE:
+                #    print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s' %
+                #          (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, encoder_loss.item(),
+                #           refiner_loss.item(), ['%.4f' % si for si in sample_iou]))
 
                 curr_volumes = [(generated_volume, "reconstructed"), (ground_truth_volume, "ground_truth")]
 
             else:
-                if cfg.PREFERENCES.VERBOSE:
-                    print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = N/A RLoss = N/A IoU = N/A,' %
-                          (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name))
+                #if cfg.PREFERENCES.VERBOSE:
+                #    print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = N/A RLoss = N/A IoU = N/A,' %
+                #          (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name))
 
                 curr_volumes = [(generated_volume, "reconstructed")]
                     

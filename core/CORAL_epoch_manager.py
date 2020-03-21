@@ -5,6 +5,7 @@ import sys
 import utils.network_utils
 
 
+# https://github.com/DenisDsh/PyTorch-Deep-CORAL/blob/master/coral.py
 class CORAL_EpochManager():
 
     # train target data loader should be None; it's ignored
@@ -20,7 +21,6 @@ class CORAL_EpochManager():
         # Set up loss functions
         self.bce_loss = torch.nn.BCELoss()  # for voxels
 
-    # https://github.com/DenisDsh/PyTorch-Deep-CORAL/blob/master/coral.py
     def compute_coral_loss(self, source, target):
 
         d = source.size(1)  # dim vector
@@ -83,8 +83,10 @@ class CORAL_EpochManager():
 
         # CORAL loss between vectorized source and target features
         # TODO: this coral loss currently assumes a single view. not sure if things change w/ multiple views
-        s_image_features_vec = s_image_features.reshape(32, -1)
-        t_image_features_vec = t_image_features.reshape(32, -1)
+        s_batch_size = s_image_features.shape[0]
+        t_batch_size = t_image_features.shape[0]
+        s_image_features_vec = s_image_features.reshape(s_batch_size, -1)
+        t_image_features_vec = t_image_features.reshape(t_batch_size, -1)
 
         coral_loss = self.compute_coral_loss(s_image_features_vec, t_image_features_vec) * self.cfg.TRAIN.DA.CORAL_LAMBDA
 

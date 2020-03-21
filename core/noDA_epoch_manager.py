@@ -10,18 +10,14 @@ class NoDA_EpochManager():
     def __init__(self, cfg, encoder, decoder, merger, refiner,
                  checkpoint):
         
-        # set up trainer specific models (to cuda), solvers, and schedulers
-        # loading specific pretrained model if it exists
-        # if chekcpoint is not None:
-        # .apply()
-
-        # Set up loss functions
-        self.bce_loss = torch.nn.BCELoss()  # for voxels
         self.encoder = encoder
         self.decoder = decoder
         self.merger = merger
         self.refiner = refiner
         self.cfg = cfg
+
+        # Set up loss functions
+        self.bce_loss = torch.nn.BCELoss()  # for voxels
 
 
     # meant to be called before each epoch
@@ -32,7 +28,6 @@ class NoDA_EpochManager():
         #data_time = utils.network_utils.AverageMeter()
         self.encoder_losses = utils.network_utils.AverageMeter()
         self.refiner_losses = utils.network_utils.AverageMeter()
-        # xxx.train() for specific
 
 
     # returns a record for the step; a dict meant to be a row in a pandas df

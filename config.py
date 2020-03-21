@@ -127,10 +127,16 @@ __C.TRAIN.MOMENTUM                          = .9
 __C.TRAIN.GAMMA                             = .5
 __C.TRAIN.SAVE_FREQ                         = 10            # weights will be overwritten every save_freq epoch
 __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
-__C.TRAIN.USE_DA = None
 
+__C.TRAIN.VOXEL_CLASSIFIER_LEARNING_RATE    = 1e-3
+__C.TRAIN.VOXEL_CLASSIFIER_LR_MILESTONES    = [150]
+
+__C.TRAIN.USE_DA = None
 __C.TRAIN.DA = edict()
 __C.TRAIN.DA.CORAL_LAMBDA = 0
+__C.TRAIN.DA.DANN_LAMBDA = 0
+__C.TRAIN.DA.DANN_LEARNING_RATE = 1e-3
+__C.TRAIN.DA.DANN_LR_MILESTONES = [150]
 
 #
 # Testing options

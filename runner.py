@@ -55,6 +55,7 @@ def get_args_from_command_line():
 
     # CORAL arguments
     parser.add_argument('--coral_lam', dest='coral_lam', help='lambda for CORAL loss', default=cfg.TRAIN.DA.CORAL_LAMBDA, type=float)
+    parser.add_argument('--DANN_lam', dest='dann_lam', help='lambda for DANN', default=cfg.TRAIN.DA.DANN_LAMBDA, type=float)
 
     args = parser.parse_args()
     return args
@@ -105,6 +106,7 @@ def main():
         cfg.NETWORK.USE_MERGER = False
     cfg.TRAIN.USE_DA = args.da
     cfg.TRAIN.DA.CORAL_LAMBDA = args.coral_lam
+    cfg.TRAIN.DA.DANN_LAMBDA = args.dann_lam
     # Set GPU to use
     if type(cfg.CONST.DEVICE) == str:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE
