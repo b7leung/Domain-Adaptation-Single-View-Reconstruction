@@ -130,6 +130,7 @@ __C.TRAIN.UPDATE_N_VIEWS_RENDERING          = False
 
 __C.TRAIN.VOXEL_CLASSIFIER_LEARNING_RATE    = 1e-3
 __C.TRAIN.VOXEL_CLASSIFIER_LR_MILESTONES    = [150]
+__C.TRAIN.VOXEL_CLASSIFIER_LAMBDA    = -1
 
 __C.TRAIN.USE_DA = None
 __C.TRAIN.DA = edict()
@@ -145,6 +146,7 @@ __C.TEST                                    = edict()
 __C.TEST.RANDOM_BG_COLOR_RANGE              = [[240, 240], [240, 240], [240, 240]]
 __C.TEST.VOXEL_THRESH                       = [.2, .3, .4, .5]
 __C.TEST.SAVE_NUM                           = 0
+__C.TEST.USE_TRAIN_SET                     = False  # show test results on the training set
 
 
 # perferences

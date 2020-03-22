@@ -42,6 +42,7 @@ def get_args_from_command_line():
     parser.add_argument('--train_source_dataset', dest='train_source_dataset', help='Source dataset to train on.', default="ShapeNet", type=str)
     parser.add_argument('--train_target_dataset', dest='train_target_dataset', help='Target dataset to train on. If omitted, no DA is performed', default=None, type=str)
     parser.add_argument('--test', dest='test', help='Test neural networks', action='store_true')
+    parser.add_argument('--use_train_set', dest='use_train_set', help='Use training set when testing', action='store_true', default=False)
     parser.add_argument('--batch_size', dest='batch_size', help='name of the net', default=cfg.CONST.BATCH_SIZE, type=int)
     parser.add_argument('--epoch', dest='epoch', help='num. of epoches. Only has effect for training', default=cfg.TRAIN.NUM_EPOCHES, type=int)
     parser.add_argument('--save_num', dest='save_num', help='Save n samples per class during testing. If -1, save all.', default=cfg.TEST.SAVE_NUM, type=int)
@@ -51,11 +52,12 @@ def get_args_from_command_line():
     # general architecture arguments
     parser.add_argument('--no_refiner', dest='no_refiner', help='turn off refiner', action='store_true', default=False)
     parser.add_argument('--no_merger', dest='no_merger', help='turn off merger', action='store_true', default=False)
-    parser.add_argument('--DA', dest='da', help='Type of DA to use, in [coral]', default=None)
+    parser.add_argument('--DA', dest='da', help='Type of DA to use, in [CORAL, DANN, VoxelCls]', default=None)
 
     # CORAL arguments
     parser.add_argument('--coral_lam', dest='coral_lam', help='lambda for CORAL loss', default=cfg.TRAIN.DA.CORAL_LAMBDA, type=float)
     parser.add_argument('--DANN_lam', dest='dann_lam', help='lambda for DANN', default=cfg.TRAIN.DA.DANN_LAMBDA, type=float)
+    parser.add_argument('--voxel_lam', dest='voxel_lam', help='lambda for VoxelCls loss. -1 is adaptive linear, -2 is adaptive DANN', default=cfg.TRAIN.VOXEL_CLASSIFIER_LAMBDA, type=int)
 
     args = parser.parse_args()
     return args
@@ -99,6 +101,9 @@ def main():
         print('[FATAL] %s Invalid train target dataset, %s.' % (dt.now(), args.train_target_dataset))
         sys.exit(2)
 
+    cfg.TEST.USE_TRAIN_SET = args.use_train_set
+
+
     cfg.PREFERENCES.VERBOSE = args.verbose
     if args.no_refiner:
         cfg.NETWORK.USE_REFINER = False
@@ -107,9 +112,11 @@ def main():
     cfg.TRAIN.USE_DA = args.da
     cfg.TRAIN.DA.CORAL_LAMBDA = args.coral_lam
     cfg.TRAIN.DA.DANN_LAMBDA = args.dann_lam
+    cfg.TRAIN.VOXEL_CLASSIFIER_LAMBDA = args.voxel_lam
     # Set GPU to use
     if type(cfg.CONST.DEVICE) == str:
         os.environ["CUDA_VISIBLE_DEVICES"] = cfg.CONST.DEVICE
+
 
     # creating output folder for this trial run
     mode = "TEST" if args.test else "TRAIN"

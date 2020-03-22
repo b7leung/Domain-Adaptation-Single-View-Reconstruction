@@ -60,6 +60,10 @@ def train_net(cfg, output_dir):
             utils.data_transforms.ToTensor(),
         ])
         target_classes_to_use = [utils.network_utils.shapenet2oowl_name[shapenet_class] for shapenet_class in cfg.DATASET.CLASSES_TO_USE]
+    elif cfg.DATASET.TRAIN_TARGET_DATASET in ["OOWL_SEGMENTED"]:
+        train_target_transforms = train_source_transforms
+        target_classes_to_use = [utils.network_utils.shapenet2oowl_name[shapenet_class] for shapenet_class in cfg.DATASET.CLASSES_TO_USE]
+
 
     # this is always shapenet
     val_transforms = utils.data_transforms.Compose([

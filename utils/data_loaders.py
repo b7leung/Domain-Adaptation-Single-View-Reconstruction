@@ -527,7 +527,7 @@ class ODDSDataLoader:
             for degrees in ['000', '045', '090', '135', '180', '225', '270', '315']:
                 img_file_path = self.rendering_image_path_template % (taxonomy_folder_name, sample_name, degrees)
                 rendering_images_file_path.append(img_file_path)
-
+                
             # only append to the list of rendering images if file exists (could have a few missing objects)
             if os.path.exists(rendering_images_file_path[0]):
                 files_of_taxonomy.append({

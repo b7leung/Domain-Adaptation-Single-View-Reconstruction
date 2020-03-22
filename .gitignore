@@ -110,6 +110,7 @@ ENV/
 
 # Output
 output/
+output_submission/
 runs/
 saved_params/
 

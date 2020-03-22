@@ -68,13 +68,18 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
             utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
             utils.data_transforms.ToTensor(),
         ])
+        cfg.DATASET.CLASSES_TO_USE = [utils.network_utils.shapenet2oowl_name[shapenet_class] for shapenet_class in cfg.DATASET.CLASSES_TO_USE]
 
     # Set up data loader
     if test_data_loader is None:
+        if cfg.TEST.USE_TRAIN_SET:
+            partition = utils.data_loaders.DatasetType.TRAIN
+        else:
+            partition = utils.data_loaders.DatasetType.TEST
 
         dataset_loader = utils.data_loaders.DATASET_LOADER_MAPPING[cfg.DATASET.TEST_DATASET](cfg)
         test_data_loader = torch.utils.data.DataLoader(
-            dataset=dataset_loader.get_dataset(utils.data_loaders.DatasetType.TEST,
+            dataset=dataset_loader.get_dataset(partition,
                                                cfg.CONST.N_VIEWS_RENDERING, test_transforms, classes_filter=cfg.DATASET.CLASSES_TO_USE),
             batch_size=1,
             num_workers=1,
