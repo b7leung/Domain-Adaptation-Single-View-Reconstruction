@@ -113,6 +113,7 @@ output/
 output_submission/
 runs/
 saved_params/
+legacy_code/
 
 test.ipynb
 test.py
