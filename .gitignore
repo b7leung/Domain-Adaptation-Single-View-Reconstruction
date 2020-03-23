@@ -114,6 +114,7 @@ output_submission/
 runs/
 saved_params/
 legacy_code/
+legacy/
 
 test.ipynb
 test.py
