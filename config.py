@@ -24,6 +24,9 @@ __C.DATASETS.SHAPENET.RENDERING_PATH_OnPlaces = dataset_folder + "ShapeNet/Shape
 __C.DATASETS.SHAPENET.VOXEL_PATH              = dataset_folder + 'ShapeNet/ShapeNetVox32/%s/%s/model.binvox'
 __C.DATASETS.SHAPENET.NUM_CLASSES             = 13
 
+__C.DATASETS.SHAPENETPLACES                         = edict()
+__C.DATASETS.SHAPENETPLACES.TAXONOMY_FILE_PATH      = './datasets/ShapeNet.json'
+
 __C.DATASETS.OWILD                          = edict()
 __C.DATASETS.OWILD.TAXONOMY_FILE_PATH       = dataset_folder + '3D_ODDS_128/test_set_info.json'
 __C.DATASETS.OWILD.RENDERING_PATH           = dataset_folder + "3D_ODDS_128/OWILD/%s/%s/%s_01.png"
@@ -130,6 +133,6 @@ __C.TEST.SAVE_NUM                           = 0
 __C.TEST.USE_TRAIN_SET                     = False  # show test results on the training set
 
 
-# perferences
+# perferencepes
 __C.PREFERENCES = edict()
 __C.PREFERENCES.VERBOSE = False

@@ -98,7 +98,7 @@ def main():
     else:
         print('[FATAL] %s Invalid train target dataset, %s.' % (dt.now(), args.train_target_dataset))
         sys.exit(2)
-    if cfg.DATASET.TRAIN_SOURCE_DATASET == "ShapeNetPlaces":
+    if args.train_source_dataset == "ShapeNetPlaces" or args.test_dataset == "ShapeNetPlaces":
         cfg.DATASET.USE_PLACES = True
     cfg.TEST.USE_TRAIN_SET = args.use_train_set
     cfg.PREFERENCES.VERBOSE = args.verbose

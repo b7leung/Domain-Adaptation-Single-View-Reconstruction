@@ -627,6 +627,7 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
 
 DATASET_LOADER_MAPPING = {
     'ShapeNet': ShapeNetDataLoader,
+    'ShapeNetPlaces': ShapeNetDataLoader,
     'Pascal3D': Pascal3dDataLoader,
     'Pix3D': Pix3dDataLoader,
     'OWILD': OWILDDataLoader,
