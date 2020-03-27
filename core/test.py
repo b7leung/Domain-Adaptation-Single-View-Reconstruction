@@ -39,15 +39,20 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
     taxonomies = {t['taxonomy_id']: t for t in taxonomies}
 
     # setting up dataset-specific properties
-    # TODO: check if these make sense
     IMG_SIZE = cfg.CONST.IMG_H, cfg.CONST.IMG_W
     CROP_SIZE = cfg.CONST.CROP_IMG_H, cfg.CONST.CROP_IMG_W
     if cfg.DATASET.TEST_DATASET == "ShapeNet":
-        # shapenet case
         has_gt_volume = True
         test_transforms = utils.data_transforms.Compose([
             utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
             utils.data_transforms.RandomBackground(cfg.TEST.RANDOM_BG_COLOR_RANGE),
+            utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
+            utils.data_transforms.ToTensor(),
+        ])
+    elif cfg.DATASET.TEST_DATASET == "ShapeNetPlaces":
+        has_gt_volume = True
+        test_transforms = utils.data_transforms.Compose([
+            utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
             utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
             utils.data_transforms.ToTensor(),
         ])
@@ -127,6 +132,8 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
 
     # keeps track of how many examples of each class has been saved
     save_count = {}
+
+    # save latent vectors and classification labels for t-SNE embeddings
     latent_vectors = []
     classification_labels = []
 
@@ -154,6 +161,7 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
             image_features = encoder(rendering_images)
             raw_features, generated_volume = decoder(image_features)
 
+            # save latent vectors
             for instance_features in image_features:
                 for view_features in instance_features:
                     latent_vectors.append(view_features.reshape(-1))
@@ -192,19 +200,9 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
                 test_iou[taxonomy_id]['n_samples'] += 1
                 test_iou[taxonomy_id]['iou'].append(sample_iou)
 
-                # Print sample loss and IoU
-                #if cfg.PREFERENCES.VERBOSE:
-                #    print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = %.4f RLoss = %.4f IoU = %s' %
-                #          (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name, encoder_loss.item(),
-                #           refiner_loss.item(), ['%.4f' % si for si in sample_iou]))
-
                 curr_volumes = [(generated_volume, "reconstructed"), (ground_truth_volume, "ground_truth")]
 
             else:
-                #if cfg.PREFERENCES.VERBOSE:
-                #    print('[INFO] %s Test[%d/%d] Taxonomy = %s Sample = %s EDLoss = N/A RLoss = N/A IoU = N/A,' %
-                #          (dt.now(), sample_idx + 1, n_samples, taxonomy_id, sample_name))
-
                 curr_volumes = [(generated_volume, "reconstructed")]
                     
             # save gt reconstruction, estimated reconstruction, and input images 
@@ -233,8 +231,8 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
     latent_vectors = [lv.cpu().numpy() for lv in latent_vectors]
     latent_vectors = np.array(latent_vectors)
 
-    # Shape based results are only possible if we have GT volume
     max_iou = 0
+    # Shape based results are only possible if we have GT volume
     if has_gt_volume:
         mean_iou = []
         for taxonomy_id in test_iou:
@@ -268,5 +266,5 @@ def test_net(cfg, epoch_idx=-1, output_dir=None, test_data_loader=None,
 
         max_iou = np.max(mean_iou)
 
-    # returning assets/useful data to be used for later visualization
+    # returning assets/useful data to be used for later visualization (like t-SNE)
     return [max_iou, classification_labels, latent_vectors]

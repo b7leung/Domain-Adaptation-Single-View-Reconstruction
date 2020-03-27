@@ -4,11 +4,12 @@ import sys
 
 import utils.network_utils
 
-
+# This EpochManager implements the Pix2Vox architecture with
+# a CORAL loss for the latent feature maps between the two domains.
+# Some the the code is based off this repo:
 # https://github.com/DenisDsh/PyTorch-Deep-CORAL/blob/master/coral.py
 class CORAL_EpochManager():
 
-    # train target data loader should be None; it's ignored
     def __init__(self, cfg, encoder, decoder, merger, refiner,
                  checkpoint):
         
@@ -20,6 +21,7 @@ class CORAL_EpochManager():
 
         # Set up loss functions
         self.bce_loss = torch.nn.BCELoss()  # for voxels
+
 
     def compute_coral_loss(self, source, target):
 
@@ -46,7 +48,6 @@ class CORAL_EpochManager():
         else:
             device = torch.device('cpu')
 
-        #id_row = torch.ones(n).resize(1, n).to(device=device)
         id_row = torch.ones(n).reshape(1, n).to(device=device)
         sum_column = torch.mm(id_row, input_data)
         mean_column = torch.div(sum_column, n)
@@ -56,7 +57,8 @@ class CORAL_EpochManager():
 
         return c
 
-    # meant to be called before each epoch
+
+    # meant to be called before each epoch to initalize modules and other things
     def init_epoch(self):
 
         # Batch average meterics
@@ -65,7 +67,8 @@ class CORAL_EpochManager():
         self.coral_losses = utils.network_utils.AverageMeter()
 
 
-    # returns a record for the step; a dict meant to be a row in a pandas df
+    # returns step_record; a dict meant to be a row in a pandas dataframe which records
+    # information for this current minibatch step
     def perform_step(self, source_batch_data, target_batch_data, epoch_idx):
 
         (s_taxonomy_id, s_sample_names, s_rendering_images,
@@ -129,4 +132,5 @@ class CORAL_EpochManager():
 
 
     def end_epoch(self):
+        # nothing to do here since we don't have any EpochManager-specific modules
         pass

@@ -12,30 +12,17 @@ cfg                                         = __C
 #
 dataset_folder = '/data7/brandon/research/datasets/'
 __C.DATASETS                                = edict()
-__C.DATASETS.SOURCE_TRAIN_AVAILABLE                = ["ShapeNet"]
-__C.DATASETS.TARGET_TRAIN_AVAILABLE                = ["ShapeNet", "OWILD", "OOWL", "OOWL_SEGMENTED"]
-__C.DATASETS.TEST_AVAILABLE                 = ["ShapeNet", "OWILD", "OOWL", "OOWL_SEGMENTED"]
+__C.DATASETS.SOURCE_TRAIN_AVAILABLE         = ["ShapeNet", "ShapeNetPlaces"]
+__C.DATASETS.TARGET_TRAIN_AVAILABLE         = ["OWILD", "OOWL", "OOWL_SEGMENTED"]
+__C.DATASETS.TEST_AVAILABLE                 = ["ShapeNet", "ShapeNetPlaces", "OWILD", "OOWL", "OOWL_SEGMENTED"]
 __C.DATASETS.REBUILD_CACHE                  = False
 
-__C.DATASETS.SHAPENET                       = edict()
-__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH    = './datasets/ShapeNet.json'
-# __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH  = './datasets/PascalShapeNet.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH        = dataset_folder + "ShapeNet/ShapeNetRendering/%s/%s/rendering/%02d.png"
+__C.DATASETS.SHAPENET                         = edict()
+__C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH      = './datasets/ShapeNet.json'
+__C.DATASETS.SHAPENET.RENDERING_PATH          = dataset_folder + "ShapeNet/ShapeNetRendering/%s/%s/rendering/%02d.png"
 __C.DATASETS.SHAPENET.RENDERING_PATH_OnPlaces = dataset_folder + "ShapeNet/ShapeNetRendering_OnPlaces/%s/%s/rendering/%02d.png"
-__C.DATASETS.SHAPENET.VOXEL_PATH            = dataset_folder + 'ShapeNet/ShapeNetVox32/%s/%s/model.binvox'
-__C.DATASETS.SHAPENET.NUM_CLASSES           = 13
-
-__C.DATASETS.PASCAL3D                       = edict()
-__C.DATASETS.PASCAL3D.TAXONOMY_FILE_PATH    = './datasets/Pascal3D.json'
-__C.DATASETS.PASCAL3D.ANNOTATION_PATH       = '/home/hzxie/Datasets/PASCAL3D/Annotations/%s_imagenet/%s.mat'
-__C.DATASETS.PASCAL3D.RENDERING_PATH        = '/home/hzxie/Datasets/PASCAL3D/Images/%s_imagenet/%s.JPEG'
-__C.DATASETS.PASCAL3D.VOXEL_PATH            = '/home/hzxie/Datasets/PASCAL3D/CAD/%s/%02d.binvox'
-
-__C.DATASETS.PIX3D                          = edict()
-__C.DATASETS.PIX3D.TAXONOMY_FILE_PATH       = './datasets/Pix3D.json'
-__C.DATASETS.PIX3D.ANNOTATION_PATH          = '/home/hzxie/Datasets/Pix3D/pix3d.json'
-__C.DATASETS.PIX3D.RENDERING_PATH           = '/home/hzxie/Datasets/Pix3D/img/%s/%s.%s'
-__C.DATASETS.PIX3D.VOXEL_PATH               = '/home/hzxie/Datasets/Pix3D/model/%s/%s/%s.binvox'
+__C.DATASETS.SHAPENET.VOXEL_PATH              = dataset_folder + 'ShapeNet/ShapeNetVox32/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.NUM_CLASSES             = 13
 
 __C.DATASETS.OWILD                          = edict()
 __C.DATASETS.OWILD.TAXONOMY_FILE_PATH       = dataset_folder + '3D_ODDS_128/test_set_info.json'
@@ -55,14 +42,10 @@ __C.DATASETS.OOWL_SEGMENTED.RENDERING_PATH           = dataset_folder + "3D_ODDS
 __C.DATASET                                 = edict()
 __C.DATASET.MEAN                            = [0.5, 0.5, 0.5]
 __C.DATASET.STD                             = [0.5, 0.5, 0.5]
-__C.DATASET.TRAIN_SOURCE_DATASET                   = 'ShapeNet'
-__C.DATASET.TRAIN_TARGET_DATASET                   = None
+__C.DATASET.TRAIN_SOURCE_DATASET            = 'ShapeNet'
+__C.DATASET.TRAIN_TARGET_DATASET            = None
 __C.DATASET.USE_PLACES                      = False
-
 __C.DATASET.TEST_DATASET                    = 'ShapeNet'
-# __C.DATASET.TEST_DATASET                  = 'Pascal3D'
-# __C.DATASET.TEST_DATASET                  = 'Pix3D'
-
 __C.DATASET.CLASSES_TO_USE                  = None
 
 
@@ -86,8 +69,6 @@ __C.CONST.CROP_IMG_H                        = 128       # Dummy property for Pas
 __C.DIR                                     = edict()
 __C.DIR.OUT_PATH                            = './output'
 __C.DIR.DATASET_CACHE_PATH                  = './caches/dataset_file_caches'
-__C.DIR.RANDOM_BG_PATH                      = '/home/hzxie/Datasets/SUN2012/JPEGImages'
-__C.DIR.MEAN_FEATURES_PATH                    = './caches/class_mean_shapes.p'
 
 #
 # Network

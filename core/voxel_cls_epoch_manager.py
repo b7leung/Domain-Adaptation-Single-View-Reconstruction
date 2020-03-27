@@ -9,10 +9,13 @@ import numpy as np
 import utils.network_utils
 from utils.gradient_reversal_module import GradientReversal
 
-# classifies voxels, and also has a DANN loss
+# This EpochManager implements the Pix2Vox architecture with
+# DANN-style adversarial domain adaptation for the latent feature map
+# Some the the code is based off this repo:
+# https://github.com/jvanvugt/pytorch-domain-adaptation
+# Additionally, a classifier is attached to the reconstructed voxel
 class VoxelClassify_EpochManager():
 
-    # train target data loader should be None; it's ignored
     def __init__(self, cfg, encoder, decoder, merger, refiner,
                  checkpoint, total_epochs):
         
@@ -26,6 +29,7 @@ class VoxelClassify_EpochManager():
         # TODO: find a way to fix this magic number
         num_classes = 13
 
+        # seting up EpochManager specific models, solvers, and schedulers
         self.voxel_classifier = nn.Sequential(
             nn.Linear(32 * 32 * 32, 100),
             nn.ReLU(),
@@ -67,6 +71,7 @@ class VoxelClassify_EpochManager():
         self.bce_logits_loss = torch.nn.BCEWithLogitsLoss()  # for domain classification
 
 
+    # linearly adaptive lambda for voxel classification loss, to making training to smoothly
     def get_lam_linear(self, curr_epoch):
 
         lam = curr_epoch / self.total_epochs
@@ -74,16 +79,17 @@ class VoxelClassify_EpochManager():
         return lam
 
 
+    # exponential adaptive lambda, as suggested in the DANN paper
     def get_lam_DANN(self, curr_epoch):
-        # the lambda value as suggested in the DANN paper
         gamma = 10
         p = curr_epoch / self.total_epochs
         lam = (2 / (1 + np.exp(-gamma * p))) - 1
         return lam
 
 
+    # meant to be called before each epoch to initalize modules and other things
     def init_epoch(self):
-        # meant to be called before each epoch
+
         self.domain_dis.train()
         self.voxel_classifier.train()
         # Batch average meterics
@@ -123,7 +129,7 @@ class VoxelClassify_EpochManager():
         domain_dis_loss_unweighted = self.bce_logits_loss(domain_predictions, domain_labels)
         domain_dis_loss = domain_dis_loss_unweighted * self.cfg.TRAIN.DA.DANN_LAMBDA
 
-        # generating voxel and computing associated losses
+        # generating voxel and computing associated voxel IoU losses
         s_raw_features, s_generated_volumes = self.decoder(s_image_features)
         t_raw_features, t_generated_volumes = self.decoder(t_image_features)
         if self.cfg.NETWORK.USE_MERGER and epoch_idx >= self.cfg.TRAIN.EPOCH_START_USE_MERGER:
@@ -142,9 +148,8 @@ class VoxelClassify_EpochManager():
         else:
             refiner_loss = encoder_loss
 
-        # classify voxel loss
-        # this is batch_size x 32 x 32 x 32
-        s_t_generated_volumes = torch.cat((s_generated_volumes, t_generated_volumes), axis=0)
+        #  voxel classification loss
+        s_t_generated_volumes = torch.cat((s_generated_volumes, t_generated_volumes), axis=0)  # batch_size x 32 x 32 x 32
         batch_size = s_t_generated_volumes.shape[0]
         s_t_generated_volumes_vec = s_t_generated_volumes.reshape(batch_size, -1)
         voxel_pred_classes = self.voxel_classifier(s_t_generated_volumes_vec)  # batch_size x num_classes
@@ -173,7 +178,7 @@ class VoxelClassify_EpochManager():
             refiner_loss.backward(retain_graph=True)
         voxel_classify_loss.backward()
 
-        # stepping for models introduced by manager
+        # stepping for models introduced by EpochManager
         self.voxel_classifier_solver.step()
         self.domain_dis_solver.step()
 
@@ -190,5 +195,6 @@ class VoxelClassify_EpochManager():
 
 
     def end_epoch(self):
+        # stepping for EpochManager-specific scheduler
         self.domain_dis_lr_scheduler.step()
         self.voxel_classifier_lr_scheduler.step()

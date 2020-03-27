@@ -3,10 +3,10 @@ import torch
 
 import utils.network_utils
 
-
+# This is the EpochManager which does not do any domain adaptation.
+# It just uses the encoder, decoder, merger, and refiner.
 class NoDA_EpochManager():
 
-    # train target data loader should be None; it's ignored
     def __init__(self, cfg, encoder, decoder, merger, refiner,
                  checkpoint):
         
@@ -20,20 +20,19 @@ class NoDA_EpochManager():
         self.bce_loss = torch.nn.BCELoss()  # for voxels
 
 
-    # meant to be called before each epoch
+    # meant to be called before each epoch to initalize modules and other things
     def init_epoch(self):
 
-        # Batch average meterics
-        #batch_time = utils.network_utils.AverageMeter()
-        #data_time = utils.network_utils.AverageMeter()
+        # set up batch average metrics 
         self.encoder_losses = utils.network_utils.AverageMeter()
         self.refiner_losses = utils.network_utils.AverageMeter()
 
 
-    # returns a record for the step; a dict meant to be a row in a pandas df
-    # since no DA, target batch data is ignored
+    # returns step_record; a dict meant to be a row in a pandas dataframe which records
+    # information for this current minibatch step
     def perform_step(self, source_batch_data, target_batch_data, epoch_idx):
 
+        # since no domain adaptation is used, target_batch_data is ignored
         (taxonomy_id, sample_names, rendering_images,
             ground_truth_volumes, ground_truth_class_labels) = source_batch_data 
         
@@ -70,9 +69,6 @@ class NoDA_EpochManager():
         else:
             encoder_loss.backward()
 
-        # architecure specific solver.step() goes here.
-
-
         # processing record for this update step
         self.encoder_losses.update(encoder_loss.item())
         self.refiner_losses.update(refiner_loss.item())
@@ -82,5 +78,5 @@ class NoDA_EpochManager():
 
 
     def end_epoch(self):
-        # architecture specific scheduler.step()
+        # nothing to do here since we don't have any EpochManager-specific modules
         pass

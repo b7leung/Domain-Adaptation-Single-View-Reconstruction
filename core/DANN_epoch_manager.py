@@ -7,11 +7,12 @@ from torch import nn
 import utils.network_utils
 from utils.gradient_reversal_module import GradientReversal
 
-
+# This EpochManager implements the Pix2Vox architecture with
+# DANN-style adversarial domain adaptation for the latent feature map
+# Some the the code is based off this repo:
 # https://github.com/jvanvugt/pytorch-domain-adaptation
 class DANN_EpochManager():
 
-    # train target data loader should be None; it's ignored
     def __init__(self, cfg, encoder, decoder, merger, refiner,
                  checkpoint):
         
@@ -21,7 +22,8 @@ class DANN_EpochManager():
         self.refiner = refiner
         self.cfg = cfg
 
-        # seting up trainer specific models, solvers, and schedulers, and sending them to cuda
+        # seting up EpochManager specific models, solvers, and schedulers
+        # in this case, it's a domain binary classifier
         self.domain_dis = nn.Sequential(
             GradientReversal(),
             nn.Linear(8 * 8 * 256, 50),
@@ -33,7 +35,7 @@ class DANN_EpochManager():
 
         self.domain_dis.apply(utils.network_utils.init_weights)
 
-        # TODO: loading specific pretrained model if it exists 
+        # TODO: add option of loading specific pretrained model if it exists 
         # TODO: add option for sgd.
         if cfg.TRAIN.POLICY == 'adam':
             self.domain_dis_solver = torch.optim.Adam(self.domain_dis.parameters(), lr=cfg.TRAIN.DA.DANN_LEARNING_RATE, betas=cfg.TRAIN.BETAS)
@@ -47,9 +49,8 @@ class DANN_EpochManager():
         self.bce_loss = torch.nn.BCELoss()  # for voxels
         self.bce_logits_loss = torch.nn.BCEWithLogitsLoss()  # for domain classification
 
-
+    # meant to be called before each epoch to initalize modules and other things
     def init_epoch(self):
-        # meant to be called before each epoch
         
         self.domain_dis.train()
         # Batch average meterics
@@ -58,7 +59,8 @@ class DANN_EpochManager():
         self.domain_dis_losses = utils.network_utils.AverageMeter()
 
 
-    # returns a record for the step; a dict meant to be a row in a pandas df
+    # returns step_record; a dict meant to be a row in a pandas dataframe which records
+    # information for this current minibatch step
     def perform_step(self, source_batch_data, target_batch_data, epoch_idx):
 
         (s_taxonomy_id, s_sample_names, s_rendering_images,
@@ -84,7 +86,6 @@ class DANN_EpochManager():
         # source domain has label 0, target domain has label 1
         domain_labels = torch.cat([torch.zeros((s_batch_size, 1)), torch.ones((t_batch_size, 1))], axis=0).cuda()
 
-        # TODO: look into adaptive lambda in the paper
         domain_dis_loss = self.bce_logits_loss(domain_predictions, domain_labels) * self.cfg.TRAIN.DA.DANN_LAMBDA
 
         s_raw_features, s_generated_volumes = self.decoder(s_image_features)
@@ -109,7 +110,6 @@ class DANN_EpochManager():
         self.merger.zero_grad()
         self.domain_dis.zero_grad()
         
-        #TODO: should this be retain_graph?
         domain_dis_loss.backward(retain_graph=True)
         if self.cfg.NETWORK.USE_REFINER and epoch_idx >= self.cfg.TRAIN.EPOCH_START_USE_REFINER:
             encoder_loss.backward(retain_graph=True)
@@ -130,4 +130,5 @@ class DANN_EpochManager():
 
 
     def end_epoch(self):
+        # stepping for EpochManager-specific scheduler
         self.domain_dis_lr_scheduler.step()

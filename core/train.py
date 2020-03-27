@@ -2,7 +2,6 @@
 #
 # Developed by Haozhe Xie <cshzxie@gmail.com>
 
-
 from datetime import datetime as dt
 import os
 import sys
@@ -29,20 +28,14 @@ from core.voxel_cls_epoch_manager import VoxelClassify_EpochManager
 
 
 def train_net(cfg, output_dir):
-    # Enable the inbuilt cudnn auto-tuner to find the best algorithm to use
-    # might be bad if you have layers which are only activated when certain conditions are met
-    # https://stackoverflow.com/questions/58961768/set-torch-backends-cudnn-benchmark-true-or-not
-    # TODO: check this, esp. when doing DA
+
     torch.backends.cudnn.benchmark = True
 
-    # Set up data augmentation, which is different depending on the dataset
-    # TODO: check if these make sense, esp for non-shapenet datasets
-    # TODO: Add back in places case and funcionality. rn, DATASET.USE_PLACES must be false
     IMG_SIZE = cfg.CONST.IMG_H, cfg.CONST.IMG_W
     CROP_SIZE = cfg.CONST.CROP_IMG_H, cfg.CONST.CROP_IMG_W
  
-    # this is always  shapenet
-    train_source_transforms = utils.data_transforms.Compose([
+    # Shapenet data augmentation for train source dataset
+    shapenet_train_transforms = [
         utils.data_transforms.RandomCrop(IMG_SIZE, CROP_SIZE),
         utils.data_transforms.RandomBackground(cfg.TRAIN.RANDOM_BG_COLOR_RANGE),
         utils.data_transforms.ColorJitter(cfg.TRAIN.BRIGHTNESS, cfg.TRAIN.CONTRAST, cfg.TRAIN.SATURATION),
@@ -51,8 +44,22 @@ def train_net(cfg, output_dir):
         utils.data_transforms.RandomFlip(),
         utils.data_transforms.RandomPermuteRGB(),
         utils.data_transforms.ToTensor(),
-    ])
-    
+    ]
+    # Shapenet data augmentation for validation
+    shapenet_val_transforms = [
+        utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
+        utils.data_transforms.RandomBackground(cfg.TEST.RANDOM_BG_COLOR_RANGE),
+        utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
+        utils.data_transforms.ToTensor(),
+    ]
+    # If places background is enabled, disable random background.
+    if cfg.DATASET.USE_PLACES:
+        del shapenet_train_transforms[1]
+        del shapenet_val_transforms[1]
+    train_source_transforms = utils.data_transforms.Compose(shapenet_train_transforms)
+    val_transforms = utils.data_transforms.Compose(shapenet_val_transforms)
+
+    # data augmentation for train target domain dataset
     if cfg.DATASET.TRAIN_TARGET_DATASET in ["OOWL", "OWILD"]:
         train_target_transforms = utils.data_transforms.Compose([
             utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
@@ -63,21 +70,14 @@ def train_net(cfg, output_dir):
     elif cfg.DATASET.TRAIN_TARGET_DATASET in ["OOWL_SEGMENTED"]:
         train_target_transforms = train_source_transforms
         target_classes_to_use = [utils.network_utils.shapenet2oowl_name[shapenet_class] for shapenet_class in cfg.DATASET.CLASSES_TO_USE]
-
-
-    # this is always shapenet
-    val_transforms = utils.data_transforms.Compose([
-        utils.data_transforms.CenterCrop(IMG_SIZE, CROP_SIZE),
-        utils.data_transforms.RandomBackground(cfg.TEST.RANDOM_BG_COLOR_RANGE),
-        utils.data_transforms.Normalize(mean=cfg.DATASET.MEAN, std=cfg.DATASET.STD),
-        utils.data_transforms.ToTensor(),
-    ])
+    
 
     # Set up data loader
     if cfg.DATASET.TRAIN_TARGET_DATASET is None:
         eff_batch_size = cfg.CONST.BATCH_SIZE
         train_target_data_loader = None
     else:
+        # halve batch size since we are using two different datasets; source and target
         eff_batch_size = int(cfg.CONST.BATCH_SIZE / 2)
         train_target_dataset_loader = utils.data_loaders.DATASET_LOADER_MAPPING[cfg.DATASET.TRAIN_TARGET_DATASET](cfg)
         train_target_data_loader = torch.utils.data.DataLoader(
@@ -193,11 +193,11 @@ def train_net(cfg, output_dir):
               % (dt.now(), init_epoch, best_iou, best_epoch))
 
 
-    # setting up saved items
+    # setting up output files for training
     ckpt_dir = os.path.join(output_dir, 'checkpoints')
     training_record_df = pd.DataFrame()
 
-    # setting up trainer depending on the DA config chosen
+    # setting up epoch manager depending on the DA config chosen
     if cfg.TRAIN.USE_DA == "CORAL":
         epoch_manager = CORAL_EpochManager(cfg, encoder, decoder, merger, refiner, checkpoint)
     elif cfg.TRAIN.USE_DA == "DANN":
@@ -210,6 +210,7 @@ def train_net(cfg, output_dir):
         print('[FATAL] %s Invalid DA.' % (dt.now()))
         sys.exit(2)
 
+
     # Training loop
     for epoch_idx in tqdm(range(init_epoch, cfg.TRAIN.NUM_EPOCHES), desc="Epoch"):
 
@@ -221,17 +222,17 @@ def train_net(cfg, output_dir):
         epoch_manager.init_epoch()
 
         # going through minibatches for epoch
-        # each epoch corresponds to the length of the source dataset
         source_iter = iter(train_source_data_loader)
         if train_target_data_loader is not None:
             target_iter = iter(train_target_data_loader)
-        n_batches = len(train_source_data_loader)
 
+        # each epoch corresponds to the length of the source dataset
+        n_batches = len(train_source_data_loader)
         for batch_idx in tqdm(range(n_batches), desc="Minibatch", leave=False):
 
             source_batch_data = next(source_iter)
             if train_target_data_loader is not None:
-                # since the target is assumed to be smaller, we enable infinite looping thorugh iter.
+                # since the target is assumed to be smaller, we enable infinite looping thorugh iter until epoch is finished
                 try:
                     target_batch_data = next(target_iter)
                 except StopIteration:
@@ -260,7 +261,7 @@ def train_net(cfg, output_dir):
         merger_lr_scheduler.step()
         epoch_manager.end_epoch()
 
-        #TODO: look at this closer for multiview
+        #TODO: Implement this for multiview
         # Update Rendering Views
         #if cfg.TRAIN.UPDATE_N_VIEWS_RENDERING:
         #    n_views_rendering = random.randint(1, cfg.CONST.N_VIEWS_RENDERING)
@@ -269,7 +270,6 @@ def train_net(cfg, output_dir):
         #          (dt.now(), epoch_idx + 2, cfg.TRAIN.NUM_EPOCHES, n_views_rendering))
 
         # Validate the training models
-        # TODO: also show iou for other thresholds, now it's only the mean
         iou = test_net(cfg, epoch_idx + 1, output_dir, val_data_loader, encoder, decoder, refiner, merger)[0]
 
         epoch_record = {"Epoch": epoch_idx, "Minibatch": -1, "IoU": iou}
