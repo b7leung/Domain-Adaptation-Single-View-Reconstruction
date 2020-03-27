@@ -119,5 +119,6 @@ legacy/
 test.ipynb
 test.py
 run.ipynb
+runs.ipynb
 
 output_submission.tar.gz

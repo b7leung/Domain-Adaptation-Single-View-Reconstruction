@@ -42,7 +42,8 @@ def get_args_from_command_line():
     parser.add_argument('--batch_size', dest='batch_size', help='Set batch size during training.', default=cfg.CONST.BATCH_SIZE, type=int)
     parser.add_argument('--epoch', dest='epoch', help='num. of epoches. Only has effect for training', default=cfg.TRAIN.NUM_EPOCHES, type=int)
     parser.add_argument('--save_num', dest='save_num', help='During testing only: Save n reconstructions per class. If -1, save all.', default=cfg.TEST.SAVE_NUM, type=int)
-    parser.add_argument('--classes', dest="classes_to_use", nargs='+', help='Classes to use (use shapenet convention names; they will be converted as needed)', default=None)
+    parser.add_argument('--classes', dest="classes_to_use", nargs='+', help='Classes to use; use shapenet convention names, they will be converted as needed.\
+                        Shapenet classes are aeroplane, bench, cabinet, car, chair, display, lamp, speaker, rifle, sofa, table, telephone, watercraft. ', default=None)
     parser.add_argument('--num_views', dest='num_views', help='number of views to use', default=cfg.CONST.N_VIEWS_RENDERING, type=int)
 
     # general architecture arguments
@@ -97,7 +98,7 @@ def main():
     else:
         print('[FATAL] %s Invalid train target dataset, %s.' % (dt.now(), args.train_target_dataset))
         sys.exit(2)
-    if cfg.TRAIN.TRAIN_SOURCE_DATASET == "ShapeNetPlaces":
+    if cfg.DATASET.TRAIN_SOURCE_DATASET == "ShapeNetPlaces":
         cfg.DATASET.USE_PLACES = True
     cfg.TEST.USE_TRAIN_SET = args.use_train_set
     cfg.PREFERENCES.VERBOSE = args.verbose
