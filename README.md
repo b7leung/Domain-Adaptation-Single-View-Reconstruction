@@ -13,8 +13,7 @@ Please see the existing EpochManagers (core/CORAL_epoch_manager.py, core/DANN_ep
 
 # Example Usage
 
-Note that the code needs python 3.7, matplotlib 3.0.3, and a bunch of other dependencies. If you are running on the SVCL gpu cluster, just use __conda activate standard__. Otherwise, the dependencies are argparse, easydict, matplotlib, numpy, opencv-python, scipy, pytorch, torchvision, pandas, tqdm, sklearn.
-
+If you are running on the SVCL gpu cluster, use __conda activate standard__. Otherwise, the dependencies are argparse, easydict, matplotlib, numpy, opencv-python, scipy, pytorch, torchvision, pandas, tqdm, sklearn. Note that the code needs python 3.7, matplotlib 3.0.3.
 
 ### Training
 
