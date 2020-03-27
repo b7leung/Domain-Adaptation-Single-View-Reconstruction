@@ -13,7 +13,13 @@ Please see the existing EpochManagers (core/CORAL_epoch_manager.py, core/DANN_ep
 
 # Example Usage
 
-If you are running on the SVCL gpu cluster, use __conda activate standard__. Otherwise, the dependencies are argparse, easydict, matplotlib, numpy, opencv-python, scipy, pytorch, torchvision, pandas, tqdm, sklearn. Note that the code needs python 3.7, matplotlib 3.0.3.
+If you are running on the SVCL gpu cluster, use __conda activate standard__. All datasets should already be on the server and you can directly execute the commands below.
+
+Otherwise, if you running locally or on nautilus, the dependencies are argparse, easydict, matplotlib, numpy, opencv-python, scipy, pytorch, torchvision, pandas, tqdm, sklearn. Note that the code needs python 3.7, matplotlib 3.0.3. You also need to download the following datasets, and update the dataset paths in config.py.
+
+ODDS: https://drive.google.com/open?id=1ZrljEGjqjduODVEXYL4dvIVO-DQzakc2
+ShapeNet rendering images: http://cvgl.stanford.edu/data2/ShapeNetRendering.tgz
+ShapeNet voxelized models: http://cvgl.stanford.edu/data2/ShapeNetVox32.tgz
 
 ### Training
 
