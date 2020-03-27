@@ -1,16 +1,3 @@
-# Overview
-
-The original code of this repository comes from the code for pix2vox: 
-https://github.com/hzxie/Pix2Vox
-
-It has been modified in the following ways:
-* Easier to view reconstructed voxels; after evaluation, they are all outputted into a trial-specific folder
-* Compatibility with ODDS datasets
-* Compatibility for domain adaptation experiments
-* Refactor the main testing loop into polymorphic "epoch_managers", to enable more modular and flexible experimentation for different architecures.
-* tqdm progress bars
-* Generally more readable, more efficient code
-
 # Important Notes
 * Currently, only single view reconstruction is supported
 
@@ -50,3 +37,16 @@ The save_num -1 option indicates that you want to save all the reconstructions. 
 * __notebooks/Compare OOWL Reconstructions.ipynb__ has code to compare reconstructions for different runs
 * __notebooks/DA TSNE Embeddings.ipynb__ has code to see t-SNE embeddings
 * __notebooks/View_Training_Record.ipynb__ has code to monitor training progress, from training_record.pkl files.
+
+# Credits
+
+The original code of this repository comes from the code for pix2vox: 
+https://github.com/hzxie/Pix2Vox
+
+It has been modified in the following ways:
+* Easier to view reconstructed voxels; after evaluation, they are all outputted into a trial-specific folder
+* Compatibility with ODDS datasets
+* Compatibility for domain adaptation experiments
+* Refactor the main testing loop into polymorphic "epoch_managers", to enable more modular and flexible experimentation for different architecures.
+* tqdm progress bars
+* Generally more readable, more efficient code
