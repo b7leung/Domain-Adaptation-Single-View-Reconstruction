@@ -12,7 +12,9 @@ It has been modified in the following ways:
 * Generally more readable, more efficient code
 
 # Important Notes
+* Currently, only single view reconstruction is supported
 
+# How to Modify the Architecture
 In order create your own variant of pix2vox, a new __EpochManager__ must be created. Using polymorphism, this gives you the benefit of being able to try aribtarily many variants of pix2vox with different losses, domain adaptation techniques, etc without having to copy/paste the boilerplate code, which is a bad coding practice. In general, an EpochManager is responsible for the minibatch update steps in each epoch and needs to follow the following interface:
 
 * `init_epoch()` method which initalizes things before epochs (eg calling .train() on any variant-specific neural network)
