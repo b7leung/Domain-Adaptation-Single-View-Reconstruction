@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Cache
+caches/dataset_file_chaches/shapenet/*
+caches/dataset_file_chaches/shapenet_onplaces/*
 # Distribution / packaging
 .Python
 env/

@@ -14,11 +14,13 @@ import torch.utils.data.dataset
 from tqdm import tqdm
 import pickle
 import pprint
+import pdb
 
 from datetime import datetime as dt
 from enum import Enum, unique
 
 import utils.binvox_rw
+from utils.data_transforms import ToTensor
 
 
 @unique
@@ -34,11 +36,12 @@ class DatasetType(Enum):
 class ShapeNetDataset(torch.utils.data.dataset.Dataset):
     """ShapeNetDataset class used for PyTorch DataLoader"""
 
-    def __init__(self, dataset_type, file_list, n_views_rendering, transforms=None):
+    def __init__(self, dataset_type, file_list, n_views_rendering, transforms=None, gt_volume_noise=None, ):
         self.dataset_type = dataset_type
         self.file_list = file_list
         self.transforms = transforms
         self.n_views_rendering = n_views_rendering
+        self.gt_volume_noise = gt_volume_noise
         self.shapenet_cls_mapping = {
             "02691156": 0,
             "02828884": 1,
@@ -63,6 +66,9 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
 
         if self.transforms:
             rendering_images = self.transforms(rendering_images)
+
+        if self.gt_volume_noise:
+            volume = self.gt_volume_noise(volume)
 
         return taxonomy_name, sample_name, rendering_images, volume, class_labels
 
@@ -98,7 +104,7 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
             rendering_images.append(rendering_image)
 
         # Get data of volume
-        _, suffix = os.path.splitext(volume_path)
+        __, suffix = os.path.splitext(volume_path)
 
         if suffix == '.mat':
             volume = scipy.io.loadmat(volume_path)
@@ -107,7 +113,10 @@ class ShapeNetDataset(torch.utils.data.dataset.Dataset):
             with open(volume_path, 'rb') as f:
                 volume = utils.binvox_rw.read_as_3d_array(f)
                 volume = volume.data.astype(np.float32)
-        
+
+        if self.gt_volume_noise:
+            volume = self.gt_volume_noise(volume)
+
         return taxonomy_name, sample_name, np.asarray(rendering_images), volume, class_label
 
 
@@ -129,12 +138,11 @@ class ShapeNetDataLoader:
         # Load all taxonomies of the dataset
         with open(cfg.DATASETS.SHAPENET.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
             self.dataset_taxonomy = json.loads(file.read())
-        
+
         self.rebuild_cache = cfg.DATASETS.REBUILD_CACHE
 
-
-    def get_dataset(self, dataset_type, n_views_rendering, 
-                    transforms=None, classes_filter=None):
+    def get_dataset(self, dataset_type, n_views_rendering,
+                    transforms=None, gt_volume_noise=None, classes_filter=None):
         files = []
 
         # Load data for each category
@@ -149,22 +157,22 @@ class ShapeNetDataLoader:
                 elif dataset_type == DatasetType.VAL:
                     partition_name = "val"
 
-
-                cache_loc = os.path.join(self.dataset_cache_path, self.cache_folder_name, "{}_{}.p".format(taxonomy_folder_name, partition_name))
+                cache_loc = os.path.join(self.dataset_cache_path, self.cache_folder_name,
+                                         "{}_{}.p".format(taxonomy_folder_name, partition_name))
 
                 if self.rebuild_cache or not os.path.exists(cache_loc):
-                    print('[INFO] %s Rebuilding Cache -- Collecting files of Taxonomy[ID=%s, Name=%s, Partition=%s]' % 
+                    print('[INFO] %s Rebuilding Cache -- Collecting files of Taxonomy[ID=%s, Name=%s, Partition=%s]' %
                           (dt.now(), taxonomy['taxonomy_id'], taxonomy['taxonomy_name'], partition_name))
-                    
+
                     samples = taxonomy[partition_name]
                     files_of_taxonomy = self.get_files_of_taxonomy(taxonomy_folder_name, samples)
                     pickle.dump(files_of_taxonomy, open(cache_loc, 'wb'))
-                
+
                 else:
                     print('[INFO] %s Loading cache of Taxonomy[ID=%s, Name=%s, Partition=%s]' %
                           (dt.now(), taxonomy['taxonomy_id'], taxonomy['taxonomy_name'], partition_name))
                     files_of_taxonomy = pickle.load(open(cache_loc, 'rb'))
-                
+
                 files.extend(files_of_taxonomy)
 
         print('[INFO] %s Complete collecting files of the dataset. Total files: %d.' % (dt.now(), len(files)))
@@ -247,7 +255,7 @@ class Pascal3dDataset(torch.utils.data.dataset.Dataset):
 
         if len(rendering_image.shape) < 3:
             print('[WARN] %s It seems the image file %s is grayscale.' % (dt.now(), rendering_image_path))
-            rendering_image = np.stack((rendering_image, ) * 3, -1)
+            rendering_image = np.stack((rendering_image,) * 3, -1)
 
         # Get data of volume
         with open(volume_path, 'rb') as f:
@@ -384,7 +392,7 @@ class Pix3dDataset(torch.utils.data.dataset.Dataset):
 
         if len(rendering_image.shape) < 3:
             print('[WARN] %s It seems the image file %s is grayscale.' % (dt.now(), rendering_image_path))
-            rendering_image = np.stack((rendering_image, ) * 3, -1)
+            rendering_image = np.stack((rendering_image,) * 3, -1)
 
         # Get data of volume
         with open(volume_path, 'rb') as f:
@@ -491,7 +499,7 @@ class ODDSDataLoader:
 
         # Load all taxonomies of the dataset
         self.dataset_taxonomy = []
-        #with open(cfg.DATASETS.OWILD.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
+        # with open(cfg.DATASETS.OWILD.TAXONOMY_FILE_PATH, encoding='utf-8') as file:
         #    self.dataset_taxonomy = json.loads(file.read())
 
     def get_dataset(self, dataset_type, n_views_rendering, transforms=None, classes_filter=None):
@@ -502,7 +510,7 @@ class ODDSDataLoader:
             if classes_filter is None or taxonomy['taxonomy_name'] in classes_filter:
 
                 taxonomy_folder_name = taxonomy['taxonomy_id']
-                print('[INFO] %s Collecting files of Taxonomy[ID=%s, Name=%s]' % 
+                print('[INFO] %s Collecting files of Taxonomy[ID=%s, Name=%s]' %
                       (dt.now(), taxonomy['taxonomy_id'], taxonomy['taxonomy_name']))
                 samples = []
                 if dataset_type == DatasetType.TRAIN:
@@ -518,7 +526,7 @@ class ODDSDataLoader:
 
     def get_files_of_taxonomy(self, taxonomy_folder_name, samples):
         files_of_taxonomy = []
-        #n_samples = len(samples)
+        # n_samples = len(samples)
 
         for sample_idx, sample_name in enumerate(samples):
 
@@ -527,14 +535,14 @@ class ODDSDataLoader:
             for degrees in ['000', '045', '090', '135', '180', '225', '270', '315']:
                 img_file_path = self.rendering_image_path_template % (taxonomy_folder_name, sample_name, degrees)
                 rendering_images_file_path.append(img_file_path)
-                
+
             # only append to the list of rendering images if file exists (could have a few missing objects)
             if os.path.exists(rendering_images_file_path[0]):
                 files_of_taxonomy.append({
                     'taxonomy_name': taxonomy_folder_name,
                     'sample_name': sample_name,
                     'rendering_images': rendering_images_file_path,
-                    #'volume': volume_file_path,
+                    # 'volume': volume_file_path,
                 })
 
         return files_of_taxonomy
@@ -597,7 +605,7 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
         taxonomy_name = self.file_list[idx]['taxonomy_name']
         sample_name = self.file_list[idx]['sample_name']
         rendering_image_paths = self.file_list[idx]['rendering_images']
-        #volume_path = self.file_list[idx]['volume']
+        # volume_path = self.file_list[idx]['volume']
         class_label = self.ODDS_class_mapping[taxonomy_name]
         # Get data of rendering images. If it's training, then we pick random views. Else, we pick in order
         if self.dataset_type == DatasetType.TRAIN:
@@ -618,9 +626,10 @@ class ODDSDataset(torch.utils.data.dataset.Dataset):
 
             rendering_images.append(rendering_image)
 
-        #TODO: fix debt, class 0 rn
-        
+        # TODO: fix debt, class 0 rn
+
         return taxonomy_name, sample_name, np.asarray(rendering_images), 0, class_label
+
 
 # /////////////////////////////// = End of 3D-ODDS Class Definition = /////////////////////////////// #
 

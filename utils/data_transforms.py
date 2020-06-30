@@ -51,6 +51,24 @@ class ToTensor(object):
         return tensor.float()
 
 
+class LowFreq3DNoise(object):
+    """
+    Applies low-frequency noise to a 3D voxelized volume
+    """
+
+    def __call__(self, volumes):
+        assert (isinstance(volumes, np.ndarray))
+        assert volumes.shape[1:] == (32, 32, 32)
+        processed_volumes = np.empty(shape=(0, 32, 32, 32))
+        for idx, volume in enumerate(volumes):
+            noise = np.linspace(-np.pi, np.pi, 32**3)
+            noise = np.sin(5 * noise) > 0
+            noise = noise.reshape(32, 32, 32)
+            processed_volumes[idx, ...] = np.logical_and(noise, volume)
+
+        return processed_volumes
+
+
 class Normalize(object):
     def __init__(self, mean, std):
         self.mean = mean
@@ -98,7 +116,7 @@ class CenterCrop(object):
                     bounding_box[1] * img_height,
                     bounding_box[2] * img_width,
                     bounding_box[3] * img_height
-                ] # yapf: disable
+                ]  # yapf: disable
 
                 # Calculate the size of bounding boxes
                 bbox_width = bounding_box[2] - bounding_box[0]
@@ -195,7 +213,7 @@ class RandomCrop(object):
                     bounding_box[1] * img_height,
                     bounding_box[2] * img_width,
                     bounding_box[3] * img_height
-                ] # yapf: disable
+                ]  # yapf: disable
 
                 # Calculate the size of bounding boxes
                 bbox_width = bounding_box[2] - bounding_box[0]
@@ -287,8 +305,8 @@ class ColorJitter(object):
 
         # Randomize the order of changing brightness, contrast, and saturation
         attr_names = ['brightness', 'contrast', 'saturation']
-        attr_values = [brightness, contrast, saturation]    # The value of changing attrs
-        attr_indexes = np.array(range(len(attr_names)))    # The order of changing attrs
+        attr_values = [brightness, contrast, saturation]  # The value of changing attrs
+        attr_indexes = np.array(range(len(attr_names)))  # The order of changing attrs
         np.random.shuffle(attr_indexes)
 
         for img_idx, img in enumerate(rendering_images):
@@ -399,11 +417,11 @@ class RandomNoise(object):
         processed_images = np.empty(shape=(0, img_height, img_width, img_channels))
 
         for img_idx, img in enumerate(rendering_images):
-            processed_image = img[:, :, ::-1]    # BGR -> RGB
+            processed_image = img[:, :, ::-1]  # BGR -> RGB
             for i in range(img_channels):
                 processed_image[:, :, i] += noise_rgb[i]
 
-            processed_image = processed_image[:, :, ::-1]    # RGB -> BGR
+            processed_image = processed_image[:, :, ::-1]  # RGB -> BGR
             processed_images = np.append(processed_images, [processed_image], axis=0)
             # from copy import deepcopy
             # ori_img = deepcopy(img)

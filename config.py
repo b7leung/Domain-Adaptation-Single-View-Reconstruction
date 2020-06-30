@@ -2,6 +2,7 @@
 # 
 # Developed by Haozhe Xie <cshzxie@gmail.com>
 
+import os
 from easydict import EasyDict as edict
 
 __C                                         = edict()
@@ -10,7 +11,7 @@ cfg                                         = __C
 #
 # Dataset Config
 #
-dataset_folder = '/data7/brandon/research/datasets/'
+dataset_folder = '/home/svcl-oowl/dataset/'
 __C.DATASETS                                = edict()
 __C.DATASETS.SOURCE_TRAIN_AVAILABLE         = ["ShapeNet", "ShapeNetPlaces"]
 __C.DATASETS.TARGET_TRAIN_AVAILABLE         = ["OWILD", "OOWL", "OOWL_SEGMENTED"]
@@ -19,25 +20,25 @@ __C.DATASETS.REBUILD_CACHE                  = False
 
 __C.DATASETS.SHAPENET                         = edict()
 __C.DATASETS.SHAPENET.TAXONOMY_FILE_PATH      = './datasets/ShapeNet.json'
-__C.DATASETS.SHAPENET.RENDERING_PATH          = dataset_folder + "ShapeNet/ShapeNetRendering/%s/%s/rendering/%02d.png"
-__C.DATASETS.SHAPENET.RENDERING_PATH_OnPlaces = dataset_folder + "ShapeNet/ShapeNetRendering_OnPlaces/%s/%s/rendering/%02d.png"
-__C.DATASETS.SHAPENET.VOXEL_PATH              = dataset_folder + 'ShapeNet/ShapeNetVox32/%s/%s/model.binvox'
+__C.DATASETS.SHAPENET.RENDERING_PATH          = os.path.join(dataset_folder, "ShapeNet/ShapeNetRendering/%s/%s/rendering/%02d.png")
+__C.DATASETS.SHAPENET.RENDERING_PATH_OnPlaces = os.path.join(dataset_folder, "ShapeNet/ShapeNetRendering_OnPlaces/%s/%s/rendering/%02d.png")
+__C.DATASETS.SHAPENET.VOXEL_PATH              = os.path.join(dataset_folder, 'ShapeNet/ShapeNetVox32/%s/%s/model.binvox')
 __C.DATASETS.SHAPENET.NUM_CLASSES             = 13
 
 __C.DATASETS.SHAPENETPLACES                         = edict()
 __C.DATASETS.SHAPENETPLACES.TAXONOMY_FILE_PATH      = './datasets/ShapeNet.json'
 
 __C.DATASETS.OWILD                          = edict()
-__C.DATASETS.OWILD.TAXONOMY_FILE_PATH       = dataset_folder + '3D_ODDS_128/test_set_info.json'
-__C.DATASETS.OWILD.RENDERING_PATH           = dataset_folder + "3D_ODDS_128/OWILD/%s/%s/%s_01.png"
+__C.DATASETS.OWILD.TAXONOMY_FILE_PATH       = os.path.join(dataset_folder, '3D_ODDS/test_set_info.json')
+__C.DATASETS.OWILD.RENDERING_PATH           = os.path.join(dataset_folder, "3D_ODDS/OWILD/%s/%s/%s_01.png")
 
 __C.DATASETS.OOWL                          = edict()
-__C.DATASETS.OOWL.TAXONOMY_FILE_PATH       = dataset_folder + '3D_ODDS_128/test_set_info.json'
-__C.DATASETS.OOWL.RENDERING_PATH           = dataset_folder + "3D_ODDS_128/OOWL/%s/%s/%s_15.png"
+__C.DATASETS.OOWL.TAXONOMY_FILE_PATH       = os.path.join(dataset_folder, '3D_ODDS/test_set_info.json')
+__C.DATASETS.OOWL.RENDERING_PATH           = os.path.join(dataset_folder, "3D_ODDS/OOWL/%s/%s/%s_15.png")
 
 __C.DATASETS.OOWL_SEGMENTED                          = edict()
-__C.DATASETS.OOWL_SEGMENTED.TAXONOMY_FILE_PATH       = dataset_folder + '3D_ODDS_128/test_set_info.json'
-__C.DATASETS.OOWL_SEGMENTED.RENDERING_PATH           = dataset_folder + "3D_ODDS_128/OOWL_Segmented/%s/%s/%s_15.png"
+__C.DATASETS.OOWL_SEGMENTED.TAXONOMY_FILE_PATH       = os.path.join(dataset_folder, '3D_ODDS/test_set_info.json')
+__C.DATASETS.OOWL_SEGMENTED.RENDERING_PATH           = os.path.join(dataset_folder, "3D_ODDS/OOWL_Segmented/%s/%s/%s_15.png")
 
 #
 # Dataset
